@@ -50,10 +50,15 @@ bool QNode::init() {
 	
 	uav_state_sub = n.subscribe<mavros_msgs::State>("/mavros/state", 10, &QNode::state_callback, this);
 	uav_imu_sub = n.subscribe<Imu>("/mavros/imu/data", 1, &QNode::imu_callback, this);
-	uav_gps_sub = n.subscribe<Gpsraw>("/mavros/gpsstatusps1/raw", 1, &QNode::gps_callback, this);
+	uav_gps_sub = n.subscribe<Gpsraw>("/mavros/gpsstatus/gps1/raw", 1, &QNode::gps_callback, this);
+	uav_bat_sub = n.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 1, &QNode::bat_callback, this);
 	uav_from_sub = n.subscribe<mavros_msgs::Mavlink>("/mavlink/from", 1, &QNode::from_callback, this);
 	uav_arming_client = n.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
 	uav_setmode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+
+	uav_sethome_client = n.serviceClient<mavros_msgs::CommandHome>("mavros/cmd/set_home");
+	uav_takeoff_client = n.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
+	uav_land_client = n.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
 
 	start();
 	return true;
@@ -100,6 +105,10 @@ void QNode::gps_callback(const outdoor_gcs::GPSRAW::ConstPtr &msg){
 	uav_received.pregps = true;
 }
 
+void QNode::bat_callback(const sensor_msgs::BatteryState::ConstPtr &msg){
+	uav_bat = *msg;
+}
+
 void QNode::from_callback(const mavros_msgs::Mavlink::ConstPtr &msg){
 	uav_from = *msg;
 }
@@ -114,12 +123,22 @@ void QNode::Set_Mode(std::string command_mode){
 	uav_setmode_client.call(uav_setmode);
 }
 
+void QNode::Set_Home(){
+	uav_sethome.request.current_gps = true;
+	uav_sethome_client.call(uav_sethome);
+	// std::cout << uav_sethome.response.success << std::endl;
+}
+
 mavros_msgs::State QNode::GetState(){
 	return uav_state;
 }
 
 Gpsraw QNode::GetGPS(){
 	return uav_gps;
+}
+
+ sensor_msgs::BatteryState QNode::GetBat(){
+	return uav_bat;
 }
 
 mavros_msgs::Mavlink QNode::GetFrom(){

@@ -84,20 +84,31 @@ void MainWindow::on_OFFBOARD_clicked(bool check){
 	qnode.Set_Mode("OFFBOARD");
 }
 
+void MainWindow::on_SET_HOME_clicked(bool check){
+	qnode.Set_Home();
+}
+
 ////////////////////////// Update signals /////////////////////////
 void MainWindow::updateuav(){
 
 	mavros_msgs::State state_data = qnode.GetState();
 	outdoor_gcs::GPSRAW gps_data = qnode.GetGPS();
+    sensor_msgs::BatteryState bat_data = qnode.GetBat();
 	mavros_msgs::Mavlink from_data = qnode.GetFrom();
     outdoor_gcs::signalRec signal = qnode.Update_uav_signal();
 	if (signal.rosReceived){
         ui.CONNECT->setText("<font color='green'>UAV CONNECTED: </font>"+QString::number(from_data.sysid));
-		ui.MODE->setText(QString::fromStdString(state_data.mode));
+        ui.Volt->setText(QString::number(bat_data.voltage, 'f', 2));
+        if (state_data.mode.empty()){
+            ui.MODE->setText("<font color='red'>---</font>");
+        }
+        else{
+		    ui.MODE->setText(QString::fromStdString(state_data.mode));
+        }
+
 		if (state_data.armed){
 			uav_ARMED = true;
 			ui.ARM->setText("DISARM");
-
 		}
 		else{
 			uav_ARMED = false;
@@ -105,7 +116,7 @@ void MainWindow::updateuav(){
 		}
 	}
 	else{
-        ui.CONNECT->setText("<font color='red'>UAV DISCONNECTED</font>");
+        ui.CONNECT->setText("<font color='red'>UAV UNCONNECTED</font>");
         ui.MODE->setText("<font color='red'>---</font>");
 	}
 

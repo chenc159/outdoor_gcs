@@ -47,6 +47,7 @@ public Q_SLOTS:
 	*******************************************/
 	void on_ARM_clicked(bool check);
 	void on_OFFBOARD_clicked(bool check);
+	void on_SET_HOME_clicked(bool check);
 
     /******************************************
     ** Manual connections
