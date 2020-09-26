@@ -53,11 +53,12 @@ namespace outdoor_gcs {
 
 	struct signalRec
 	{
+		bool prestate = false;
+		bool preimu = false;
 		bool pregps = false;
-		bool preros = false;
+		bool stateReceived = false;
+		bool imuReceived = false;
 		bool gpsReceived = false;
-		bool rosReceived = false;
-		// bool Isconnected = false;
 	};
 
 

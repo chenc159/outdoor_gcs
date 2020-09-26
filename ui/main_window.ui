@@ -43,8 +43,8 @@
        <widget class="QPushButton" name="ARM">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>60</y>
+          <x>310</x>
+          <y>20</y>
           <width>121</width>
           <height>61</height>
          </rect>
@@ -56,8 +56,8 @@
        <widget class="QPushButton" name="TAKEOFF">
         <property name="geometry">
          <rect>
-          <x>150</x>
-          <y>60</y>
+          <x>450</x>
+          <y>20</y>
           <width>121</width>
           <height>61</height>
          </rect>
@@ -76,7 +76,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>UAV connected</string>
+         <string>UAV CONNECTED: </string>
         </property>
        </widget>
        <widget class="QGroupBox" name="GPS">
@@ -209,17 +209,17 @@
          <string>UAV mode: </string>
         </property>
        </widget>
-       <widget class="QPushButton" name="OFFBOARD">
+       <widget class="QPushButton" name="SET_MODE">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>420</y>
-          <width>251</width>
-          <height>61</height>
+          <x>140</x>
+          <y>430</y>
+          <width>121</width>
+          <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>OFFBOARD</string>
+         <string>SET MODE</string>
         </property>
        </widget>
        <widget class="QLabel" name="MODE">
@@ -259,6 +259,42 @@
         </property>
         <property name="text">
          <string>SET HOME</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="IMU_CONNECT">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>70</y>
+          <width>121</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>IMU CONNECTED</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="STATE_CONNECT">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>40</y>
+          <width>141</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>STATE CONNECTED</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="MODE_INPUT">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>430</y>
+          <width>121</width>
+          <height>31</height>
+         </rect>
         </property>
        </widget>
       </widget>

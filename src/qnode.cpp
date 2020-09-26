@@ -54,11 +54,11 @@ bool QNode::init() {
 	uav_bat_sub = n.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 1, &QNode::bat_callback, this);
 	uav_from_sub = n.subscribe<mavros_msgs::Mavlink>("/mavlink/from", 1, &QNode::from_callback, this);
 	uav_arming_client = n.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
-	uav_setmode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");
+	uav_setmode_client = n.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
 
-	uav_sethome_client = n.serviceClient<mavros_msgs::CommandHome>("mavros/cmd/set_home");
-	uav_takeoff_client = n.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/takeoff");
-	uav_land_client = n.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land");
+	uav_sethome_client = n.serviceClient<mavros_msgs::CommandHome>("/mavros/cmd/set_home");
+	uav_takeoff_client = n.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
+	uav_land_client = n.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
 
 	start();
 	return true;
@@ -71,15 +71,20 @@ void QNode::run() {
 
 		ros::spinOnce();
 
-		uav_received.rosReceived = false;
+		uav_received.stateReceived = false;
+		uav_received.imuReceived = false;
 		uav_received.gpsReceived = false;
-		if (uav_received.preros){
-			uav_received.rosReceived = true;
+		if (uav_received.prestate){
+			uav_received.stateReceived = true;
+		}
+		if (uav_received.preimu){
+			uav_received.imuReceived = true;
 		}
 		if (uav_received.pregps){
 			uav_received.gpsReceived = true;
 		}
-		uav_received.preros = false;
+		uav_received.prestate = false;
+		uav_received.preimu = false;
 		uav_received.pregps = false;
 
 		/* signal a ros loop update  */
@@ -93,11 +98,12 @@ void QNode::run() {
 
 void QNode::state_callback(const mavros_msgs::State::ConstPtr &msg){
 	uav_state = *msg;
+	uav_received.prestate = true;
 }
 
 void QNode::imu_callback(const sensor_msgs::Imu::ConstPtr &msg){
 	uav_imu = *msg;
-	uav_received.preros = true;
+	uav_received.preimu = true;
 }
 
 void QNode::gps_callback(const outdoor_gcs::GPSRAW::ConstPtr &msg){
@@ -121,10 +127,14 @@ void QNode::Set_Arm(bool arm_disarm){
 void QNode::Set_Mode(std::string command_mode){
 	uav_setmode.request.custom_mode = command_mode;
 	uav_setmode_client.call(uav_setmode);
+	// std::cout << uav_setmode.response.mode_sent << std::endl;
 }
 
 void QNode::Set_Home(){
 	uav_sethome.request.current_gps = true;
+	uav_sethome.request.latitude = uav_gps.lat;
+	uav_sethome.request.longitude = uav_gps.lon;
+	uav_sethome.request.altitude = uav_gps.alt;
 	uav_sethome_client.call(uav_sethome);
 	// std::cout << uav_sethome.response.success << std::endl;
 }

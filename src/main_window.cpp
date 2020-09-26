@@ -72,16 +72,46 @@ void MainWindow::showNoMasterMessage() {
 void MainWindow::on_ARM_clicked(bool check){
 	if (uav_ARMED){
 		qnode.Set_Arm(false);
-		// ui->ARM->setText("ARM");
 	}
 	else{
 		qnode.Set_Arm(true);
-		// ui->ARM->setText("DISARM");
 	}
 }
 
-void MainWindow::on_OFFBOARD_clicked(bool check){
-	qnode.Set_Mode("OFFBOARD");
+void MainWindow::on_SET_MODE_clicked(bool check){
+	// qnode.Set_Mode("OFFBOARD");
+	// qnode.Set_Mode("AUTO.TAKEOFF");
+	// qnode.Set_Mode("AUTO.LOITER");   
+    int num = ui.MODE_INPUT->text().toInt();
+    switch(num){
+    case 1:
+    	qnode.Set_Mode("AUTO.TAKEOFF");
+        break;
+    case 2:
+    	qnode.Set_Mode("AUTO.LAND");
+        break;
+    case 3:
+    	qnode.Set_Mode("AUTO.RTL");
+        break;
+    case 4:
+    	qnode.Set_Mode("AUTO.LOITER");
+        break;
+    case 5:
+    	qnode.Set_Mode("POSCTL");
+        break;
+    case 6:
+    	qnode.Set_Mode("MANUAL");
+        break;
+    case 7:
+    	qnode.Set_Mode("RATTITUDE");
+        break;
+    case 8:
+    	qnode.Set_Mode("AUTO.MISSION");
+        break;
+    case 9:
+    	qnode.Set_Mode("AUTO.READY");
+        break;
+    }
 }
 
 void MainWindow::on_SET_HOME_clicked(bool check){
@@ -96,16 +126,22 @@ void MainWindow::updateuav(){
     sensor_msgs::BatteryState bat_data = qnode.GetBat();
 	mavros_msgs::Mavlink from_data = qnode.GetFrom();
     outdoor_gcs::signalRec signal = qnode.Update_uav_signal();
-	if (signal.rosReceived){
-        ui.CONNECT->setText("<font color='green'>UAV CONNECTED: </font>"+QString::number(from_data.sysid));
+	if (signal.imuReceived){
+        ui.IMU_CONNECT->setText("<font color='green'>IMU CONNECTED</font>");
+        ui.CONNECT->setText("UAV CONNECTED: " + QString::number(from_data.sysid));
         ui.Volt->setText(QString::number(bat_data.voltage, 'f', 2));
+        if (state_data.connected){
+            ui.STATE_CONNECT->setText("<font color='green'>STATE CONNECTED</font>");
+        }
+        else{
+            ui.STATE_CONNECT->setText("<font color='red'>STATE UNCONNECTED</font>");
+        }
         if (state_data.mode.empty()){
             ui.MODE->setText("<font color='red'>---</font>");
         }
         else{
 		    ui.MODE->setText(QString::fromStdString(state_data.mode));
         }
-
 		if (state_data.armed){
 			uav_ARMED = true;
 			ui.ARM->setText("DISARM");
@@ -117,6 +153,9 @@ void MainWindow::updateuav(){
 	}
 	else{
         ui.CONNECT->setText("<font color='red'>UAV UNCONNECTED</font>");
+        ui.STATE_CONNECT->setText("<font color='red'>STATE UNCONNECTED</font>");
+        ui.IMU_CONNECT->setText("<font color='red'>IMU UNCONNECTED</font>");
+        ui.Volt->setText("<font color='red'>---</font>");
         ui.MODE->setText("<font color='red'>---</font>");
 	}
 
@@ -135,30 +174,7 @@ void MainWindow::updateuav(){
 
 }
 
-/*****************************************************************************
-** Implemenation [Slots][manually connected]
-*****************************************************************************/
 
-/**
- * This function is signalled by the underlying model. When the model changes,
- * this will drop the cursor down to the last line in the QListview to ensure
- * the user can always see the latest log message.
- */
-// void MainWindow::updateLoggingView() {
-//         ui.view_logging->scrollToBottom();
-// }
-
-/*****************************************************************************
-** Implementation [Menu]
-*****************************************************************************/
-
-// void MainWindow::on_actionAbout_triggered() {
-//     QMessageBox::about(this, tr("About ..."),tr("<h2>PACKAGE_NAME Test Program 0.10</h2><p>Copyright Yujin Robot</p><p>This package needs an about description.</p>"));
-// }
-
-/*****************************************************************************
-** Implementation [Configuration]
-*****************************************************************************/
 
 void MainWindow::ReadSettings() {
     QSettings settings("Qt-Ros Package", "outdoor_gcs");
