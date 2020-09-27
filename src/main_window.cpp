@@ -118,13 +118,63 @@ void MainWindow::on_SET_HOME_clicked(bool check){
 	qnode.Set_Home();
 }
 
+void MainWindow::on_Button_Set_clicked(bool check){
+    /* read values from line edit */
+    float target_state[3];
+
+    target_state[0] =  ui.x_input->text().toFloat();
+    target_state[1] =  ui.y_input->text().toFloat();
+    target_state[2] =  ui.z_input->text().toFloat();
+    /*----------------determine whether the input is in safe range ------------------*/
+    bool input_is_valid = true;
+
+    if(target_state[0] < -10.0 || target_state[0] > 10.0) {
+        input_is_valid = false;
+    }
+
+    if(target_state[1] < -10.0 || target_state[1] > 10.0) {
+        input_is_valid = false;
+    }
+
+    if(target_state[2] < 0|| target_state[2] > 20.0) {
+        input_is_valid = false;
+    }
+
+    /*----------------send input ------------------*/
+
+    if(input_is_valid){
+        /*  update the ENU target label */
+        ui.des_x->setText(QString::number(target_state[0], 'f', 2));
+        ui.des_y->setText(QString::number(target_state[1], 'f', 2));
+        ui.des_z->setText(QString::number(target_state[2], 'f', 2));
+
+        qnode.move_uav(target_state);
+
+    } else {
+        QMessageBox msgBox;
+        msgBox.setText("Input position is out of range!!");
+        msgBox.exec();
+    };
+}
+
+// void MainWindow::on_cf0_Button_Get_clicked(bool check){
+//     cf_gs::Mocap temp_mocap = qnode.GetMocap(0);
+//     ui.cf0_x_input->setText(QString::number(temp_mocap.position[0], 'f', 2));
+//     ui.cf0_y_input->setText(QString::number(temp_mocap.position[1], 'f', 2));
+//     ui.cf0_z_input->setText(QString::number(temp_mocap.position[2], 'f', 2));
+// }
+
+
 ////////////////////////// Update signals /////////////////////////
 void MainWindow::updateuav(){
 
 	mavros_msgs::State state_data = qnode.GetState();
-	outdoor_gcs::GPSRAW gps_data = qnode.GetGPS();
     sensor_msgs::BatteryState bat_data = qnode.GetBat();
 	mavros_msgs::Mavlink from_data = qnode.GetFrom();
+	outdoor_gcs::GPSRAW gps_data = qnode.GetGPS();
+	Gpsglobal gpsG_data = qnode.GetGPSG();
+	Gpslocal gpsL_data = qnode.GetGPSL();
+	GpsHomePos gpsH_data = qnode.GetGPSH();
     outdoor_gcs::signalRec signal = qnode.Update_uav_signal();
 	if (signal.imuReceived){
         ui.IMU_CONNECT->setText("<font color='green'>IMU CONNECTED</font>");
@@ -161,15 +211,48 @@ void MainWindow::updateuav(){
 
 	if (signal.gpsReceived){
         ui.gps_num->setText(QString::number(gps_data.satellites_visible));
-		ui.gps_lat->setText(QString::number(gps_data.lat, 'f', 2));
-		ui.gps_lon->setText(QString::number(gps_data.lon, 'f', 2));
-		ui.gps_alt->setText(QString::number(gps_data.alt, 'f', 2));
+		ui.gps_lat->setText(QString::number(gps_data.lat*1e-7, 'f', 7));
+		ui.gps_lon->setText(QString::number(gps_data.lon*1e-7, 'f', 7));
+		ui.gps_alt->setText(QString::number(gps_data.alt*1e-3, 'f', 3));
 	}
 	else{
 		ui.gps_num->setText("<font color='red'>---</font>");
         ui.gps_lat->setText("<font color='red'>---</font>");
         ui.gps_lon->setText("<font color='red'>---</font>");
         ui.gps_alt->setText("<font color='red'>---</font>");
+	}
+
+    if (signal.gpsGReceived){
+		ui.gps_lat_2->setText(QString::number(gpsG_data.latitude, 'f', 6));
+		ui.gps_lon_2->setText(QString::number(gpsG_data.longitude, 'f', 6));
+		ui.gps_alt_2->setText(QString::number(gpsG_data.altitude, 'f', 6));
+	}
+	else{
+        ui.gps_lat_2->setText("<font color='red'>---</font>");
+        ui.gps_lon_2->setText("<font color='red'>---</font>");
+        ui.gps_alt_2->setText("<font color='red'>---</font>");
+	}
+
+    if (signal.gpsLReceived){
+		ui.localx->setText(QString::number(gpsL_data.pose.pose.position.x, 'f', 6));
+		ui.localy->setText(QString::number(gpsL_data.pose.pose.position.y, 'f', 6));
+		ui.localz->setText(QString::number(gpsL_data.pose.pose.position.z, 'f', 6));
+	}
+	else{
+        ui.localx->setText("<font color='red'>---</font>");
+        ui.localy->setText("<font color='red'>---</font>");
+        ui.localz->setText("<font color='red'>---</font>");
+	}
+
+    if (signal.gpsHReceived){
+		ui.localx_2->setText(QString::number(gpsH_data.position.x, 'f', 6));
+		ui.localy_2->setText(QString::number(gpsH_data.position.y, 'f', 6));
+		ui.localz_2->setText(QString::number(gpsH_data.position.z, 'f', 6));
+	}
+	else{
+        ui.localx_2->setText("<font color='red'>---</font>");
+        ui.localy_2->setText("<font color='red'>---</font>");
+        ui.localz_2->setText("<font color='red'>---</font>");
 	}
 
 }

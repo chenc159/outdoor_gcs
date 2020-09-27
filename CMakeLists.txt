@@ -38,6 +38,7 @@ add_message_files(
   Trajectory.msg
   TrajectoryPoint.msg
   GPSRAW.msg
+  HomePosition.msg
 )
 
 add_service_files(
@@ -53,6 +54,7 @@ generate_messages(
   geometry_msgs
   sensor_msgs
   std_msgs
+  geographic_msgs
 )
 
 catkin_package(

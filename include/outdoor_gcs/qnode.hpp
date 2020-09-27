@@ -26,6 +26,7 @@
 #include <QStringListModel>
 
 #include <outdoor_gcs/GPSRAW.h>
+#include <outdoor_gcs/HomePosition.h>
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/CommandHome.h>
@@ -35,6 +36,9 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/BatteryState.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseStamped.h>
 
 
 /*****************************************************************************
@@ -44,6 +48,10 @@
 using State = mavros_msgs::State;
 using Imu = sensor_msgs::Imu;
 using Gpsraw = outdoor_gcs::GPSRAW;
+using Gpsglobal = sensor_msgs::NavSatFix;
+// using Gpslocal = geometry_msgs::PoseWithCovarianceStamped;
+using Gpslocal = nav_msgs::Odometry;
+using GpsHomePos = outdoor_gcs::HomePosition;
 
 namespace outdoor_gcs {
 
@@ -56,9 +64,15 @@ namespace outdoor_gcs {
 		bool prestate = false;
 		bool preimu = false;
 		bool pregps = false;
+		bool pregpsG = false;
+		bool pregpsL = false;
+		bool pregpsH = false;
 		bool stateReceived = false;
 		bool imuReceived = false;
 		bool gpsReceived = false;
+		bool gpsGReceived = false;
+		bool gpsLReceived = false;
+		bool gpsHReceived = false;
 	};
 
 
@@ -70,12 +84,18 @@ public:
 	bool init();
 	void run();
 	
+	void pub_command();
+	
 	void Set_Arm(bool arm_disarm);
 	void Set_Mode(std::string command_mode);
 	void Set_Home();
+	void move_uav(float target[3]);
 
-	mavros_msgs::State GetState();
+	State GetState();
 	Gpsraw GetGPS();
+	Gpsglobal GetGPSG();
+	Gpslocal GetGPSL();
+	GpsHomePos GetGPSH();
 	sensor_msgs::BatteryState GetBat();
 	mavros_msgs::Mavlink GetFrom();
 	outdoor_gcs::signalRec Update_uav_signal();
@@ -95,20 +115,29 @@ private:
 	mavros_msgs::State uav_state;
 	Imu uav_imu;
 	Gpsraw uav_gps;
+	Gpsglobal uav_gpsG;
+	Gpslocal uav_gpsL;
+	GpsHomePos uav_gpsH;
 	sensor_msgs::BatteryState uav_bat;
 	mavros_msgs::Mavlink uav_from;
 	mavros_msgs::CommandBool uav_arm;
 	mavros_msgs::SetMode uav_setmode;
 	mavros_msgs::CommandHome uav_sethome;
 
+	geometry_msgs::PoseStamped uav_setpoint;
 
 	signalRec uav_received;
 
 	ros::Subscriber uav_state_sub;
 	ros::Subscriber uav_imu_sub;
 	ros::Subscriber uav_gps_sub;
+	ros::Subscriber uav_gpsG_sub;
+	ros::Subscriber uav_gpsL_sub;
+	ros::Subscriber uav_gpsH_sub;
 	ros::Subscriber uav_bat_sub;
 	ros::Subscriber uav_from_sub;
+
+	ros::Publisher uav_setpoint_pub;
 
 	ros::ServiceClient uav_arming_client;
 	ros::ServiceClient uav_setmode_client;
@@ -119,6 +148,9 @@ private:
 	void state_callback(const mavros_msgs::State::ConstPtr &msg);
 	void imu_callback(const sensor_msgs::Imu::ConstPtr &msg);
 	void gps_callback(const outdoor_gcs::GPSRAW::ConstPtr &msg);
+	void gpsG_callback(const Gpsglobal::ConstPtr &msg);
+	void gpsL_callback(const Gpslocal::ConstPtr &msg);
+	void gpsH_callback(const GpsHomePos::ConstPtr &msg);
 	void bat_callback(const sensor_msgs::BatteryState::ConstPtr &msg);
 	void from_callback(const mavros_msgs::Mavlink::ConstPtr &msg);
 	
