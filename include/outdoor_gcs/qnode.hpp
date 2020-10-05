@@ -22,6 +22,7 @@
 #include <ros/ros.h>
 #endif
 #include <string>
+#include <Eigen/Eigen>
 #include <QThread>
 #include <QStringListModel>
 
@@ -39,6 +40,8 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <mavros_msgs/PositionTarget.h>
+
 
 
 /*****************************************************************************
@@ -52,6 +55,7 @@ using Gpsglobal = sensor_msgs::NavSatFix;
 // using Gpslocal = geometry_msgs::PoseWithCovarianceStamped;
 using Gpslocal = nav_msgs::Odometry;
 using GpsHomePos = outdoor_gcs::HomePosition;
+using PosTarg = mavros_msgs::PositionTarget;
 
 namespace outdoor_gcs {
 
@@ -89,9 +93,10 @@ public:
 	void Set_Arm(bool arm_disarm);
 	void Set_Mode(std::string command_mode);
 	void Set_Home();
-	void move_uav(float target[3]);
+	void move_uav(float target[3], float target_yaw);
 
 	State GetState();
+	Imu GetImu();
 	Gpsraw GetGPS();
 	Gpsglobal GetGPSG();
 	Gpslocal GetGPSL();
@@ -124,7 +129,8 @@ private:
 	mavros_msgs::SetMode uav_setmode;
 	mavros_msgs::CommandHome uav_sethome;
 
-	geometry_msgs::PoseStamped uav_setpoint;
+	// geometry_msgs::PoseStamped uav_setpoint;
+	PosTarg uav_setpoint;
 
 	signalRec uav_received;
 
@@ -142,8 +148,8 @@ private:
 	ros::ServiceClient uav_arming_client;
 	ros::ServiceClient uav_setmode_client;
 	ros::ServiceClient uav_sethome_client;
-	ros::ServiceClient uav_takeoff_client;
-	ros::ServiceClient uav_land_client;
+	// ros::ServiceClient uav_takeoff_client;
+	// ros::ServiceClient uav_land_client;
 
 	void state_callback(const mavros_msgs::State::ConstPtr &msg);
 	void imu_callback(const sensor_msgs::Imu::ConstPtr &msg);

@@ -46,8 +46,14 @@ public Q_SLOTS:
 	** Auto-connections (connectSlotsByName())
 	*******************************************/
 	void on_ARM_clicked(bool check);
-	void on_SET_MODE_clicked(bool check);
+	// void on_SET_MODE_clicked(bool check);
 	void on_SET_HOME_clicked(bool check);
+	void on_TAKEOFF_clicked(bool check);
+	void on_LAND_clicked(bool check);
+	void on_MODE_RTL_clicked(bool check);
+	void on_MODE_LOITER_clicked(bool check);
+	void on_MODE_MANUAL_clicked(bool check);
+	void on_MODE_POSCTL_clicked(bool check);
 	void on_Button_Set_clicked(bool check);
 
     /******************************************

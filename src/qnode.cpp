@@ -16,6 +16,7 @@
 #include <std_msgs/String.h>
 #include <sstream>
 #include "../include/outdoor_gcs/qnode.hpp"
+// #include "../include/outdoor_gcs/math_utils.h"
 
 /*****************************************************************************
 ** Namespaces
@@ -57,13 +58,14 @@ bool QNode::init() {
 	uav_bat_sub = n.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 1, &QNode::bat_callback, this);
 	uav_from_sub = n.subscribe<mavros_msgs::Mavlink>("/mavlink/from", 1, &QNode::from_callback, this);
 
-	uav_setpoint_pub = n.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+	// uav_setpoint_pub = n.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+	uav_setpoint_pub = n.advertise<PosTarg>("/mavros/setpoint_raw/local", 10);
 
 	uav_arming_client = n.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
 	uav_setmode_client = n.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
 	uav_sethome_client = n.serviceClient<mavros_msgs::CommandHome>("/mavros/cmd/set_home");
-	uav_takeoff_client = n.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
-	uav_land_client = n.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
+	// uav_takeoff_client = n.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
+	// uav_land_client = n.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
 
 	start();
 	return true;
@@ -164,11 +166,11 @@ void QNode::Set_Mode(std::string command_mode){
 }
 
 void QNode::Set_Home(){
-	uav_sethome.request.current_gps = false;
-	uav_sethome.request.yaw = 0.0;
-	uav_sethome.request.latitude = uav_gps.lat*1e-7;
-	uav_sethome.request.longitude = uav_gps.lon*1e-7;
-	uav_sethome.request.altitude = uav_gps.alt/1000.0;
+	uav_sethome.request.current_gps = true;
+	// uav_sethome.request.yaw = 0.0;
+	// uav_sethome.request.latitude = uav_gps.lat*1e-7;
+	// uav_sethome.request.longitude = uav_gps.lon*1e-7;
+	// uav_sethome.request.altitude = uav_gps.alt/1000.0;
 	// uav_sethome.current_gps = true;
 	// uav_sethome.request.yaw = NaN;
 	// uav_sethome.request.latitude = uav_gps.lat;
@@ -178,15 +180,28 @@ void QNode::Set_Home(){
 	// std::cout << uav_sethome.response.success << std::endl;
 }
 
-void QNode::move_uav(float target[3]){
+void QNode::move_uav(float target[3], float target_yaw){
 	uav_setpoint.header.stamp = ros::Time::now();
-	uav_setpoint.pose.position.x = target[0];
-	uav_setpoint.pose.position.y = target[1];
-	uav_setpoint.pose.position.z = target[2];
+	//Bitmask toindicate which dimensions should be ignored (1 means ignore,0 means not ignore; Bit 10 must set to 0)
+    //Bit 1:x, bit 2:y, bit 3:z, bit 4:vx, bit 5:vy, bit 6:vz, bit 7:ax, bit 8:ay, bit 9:az, bit 10:is_force_sp, bit 11:yaw, bit 12:yaw_rate
+    //Bit 10 should set to 0, means is not force sp
+    uav_setpoint.type_mask = 0b100111111000;  // 100 111 111 000  xyz + yaw
+    uav_setpoint.coordinate_frame = 1;
+	// uav_setpoint.pose.position.x = target[0];
+	// uav_setpoint.pose.position.y = target[1];
+	// uav_setpoint.pose.position.z = target[2];
+	uav_setpoint.position.x = target[0];
+	uav_setpoint.position.y = target[1];
+	uav_setpoint.position.z = target[2];
+	uav_setpoint.yaw = target_yaw;
 }
 
 State QNode::GetState(){
 	return uav_state;
+}
+
+Imu QNode::GetImu(){
+	return uav_imu;
 }
 
 Gpsraw QNode::GetGPS(){
@@ -205,7 +220,7 @@ GpsHomePos QNode::GetGPSH(){
 	return uav_gpsH;
 }
 
- sensor_msgs::BatteryState QNode::GetBat(){
+sensor_msgs::BatteryState QNode::GetBat(){
 	return uav_bat;
 }
 

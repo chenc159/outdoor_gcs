@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>944</width>
-    <height>704</height>
+    <width>840</width>
+    <height>655</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,8 +43,8 @@
        <widget class="QPushButton" name="ARM">
         <property name="geometry">
          <rect>
-          <x>310</x>
-          <y>20</y>
+          <x>20</x>
+          <y>170</y>
           <width>111</width>
           <height>61</height>
          </rect>
@@ -56,8 +56,8 @@
        <widget class="QPushButton" name="TAKEOFF">
         <property name="geometry">
          <rect>
-          <x>430</x>
-          <y>20</y>
+          <x>20</x>
+          <y>240</y>
           <width>111</width>
           <height>61</height>
          </rect>
@@ -82,8 +82,8 @@
        <widget class="QGroupBox" name="GPS">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>320</y>
+          <x>270</x>
+          <y>20</y>
           <width>251</width>
           <height>121</height>
          </rect>
@@ -209,19 +209,6 @@
          <string>UAV mode: </string>
         </property>
        </widget>
-       <widget class="QPushButton" name="SET_MODE">
-        <property name="geometry">
-         <rect>
-          <x>430</x>
-          <y>160</y>
-          <width>111</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>SET MODE</string>
-        </property>
-       </widget>
        <widget class="QLabel" name="MODE">
         <property name="geometry">
          <rect>
@@ -251,9 +238,9 @@
        <widget class="QPushButton" name="SET_HOME">
         <property name="geometry">
          <rect>
-          <x>310</x>
-          <y>90</y>
-          <width>231</width>
+          <x>140</x>
+          <y>170</y>
+          <width>111</width>
           <height>61</height>
          </rect>
         </property>
@@ -266,7 +253,7 @@
          <rect>
           <x>40</x>
           <y>70</y>
-          <width>121</width>
+          <width>161</width>
           <height>21</height>
          </rect>
         </property>
@@ -279,7 +266,7 @@
          <rect>
           <x>40</x>
           <y>40</y>
-          <width>141</width>
+          <width>161</width>
           <height>31</height>
          </rect>
         </property>
@@ -287,21 +274,11 @@
          <string>STATE CONNECTED</string>
         </property>
        </widget>
-       <widget class="QLineEdit" name="MODE_INPUT">
-        <property name="geometry">
-         <rect>
-          <x>310</x>
-          <y>160</y>
-          <width>111</width>
-          <height>31</height>
-         </rect>
-        </property>
-       </widget>
        <widget class="QGroupBox" name="GPS_2">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>460</y>
+          <x>270</x>
+          <y>280</y>
           <width>251</width>
           <height>121</height>
          </rect>
@@ -391,8 +368,8 @@
        <widget class="QGroupBox" name="GPS_3">
         <property name="geometry">
          <rect>
-          <x>300</x>
-          <y>460</y>
+          <x>270</x>
+          <y>410</y>
           <width>251</width>
           <height>121</height>
          </rect>
@@ -482,8 +459,8 @@
        <widget class="QGroupBox" name="GPS_4">
         <property name="geometry">
          <rect>
-          <x>300</x>
-          <y>320</y>
+          <x>270</x>
+          <y>150</y>
           <width>251</width>
           <height>121</height>
          </rect>
@@ -573,8 +550,8 @@
        <widget class="QGroupBox" name="TARGET">
         <property name="geometry">
          <rect>
-          <x>570</x>
-          <y>160</y>
+          <x>540</x>
+          <y>150</y>
           <width>271</width>
           <height>111</height>
          </rect>
@@ -633,7 +610,7 @@
        <widget class="QGroupBox" name="COMMAND">
         <property name="geometry">
          <rect>
-          <x>570</x>
+          <x>540</x>
           <y>20</y>
           <width>271</width>
           <height>121</height>
@@ -645,7 +622,7 @@
         <widget class="QLabel" name="des_x">
          <property name="geometry">
           <rect>
-           <x>10</x>
+           <x>60</x>
            <y>30</y>
            <width>67</width>
            <height>17</height>
@@ -658,7 +635,7 @@
         <widget class="QLabel" name="des_y">
          <property name="geometry">
           <rect>
-           <x>10</x>
+           <x>60</x>
            <y>60</y>
            <width>67</width>
            <height>17</height>
@@ -671,7 +648,7 @@
         <widget class="QLabel" name="des_z">
          <property name="geometry">
           <rect>
-           <x>10</x>
+           <x>60</x>
            <y>90</y>
            <width>67</width>
            <height>17</height>
@@ -679,6 +656,214 @@
          </property>
          <property name="text">
           <string>---</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="title_des_x">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>30</y>
+           <width>31</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>x</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="title_des_y">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>60</y>
+           <width>31</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>y</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="title_des_z">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>90</y>
+           <width>31</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>z</string>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QPushButton" name="LAND">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>240</y>
+          <width>111</width>
+          <height>61</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>LAND</string>
+        </property>
+       </widget>
+       <widget class="QGroupBox" name="groupBox">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>310</y>
+          <width>231</width>
+          <height>111</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>SET MODE</string>
+        </property>
+        <widget class="QPushButton" name="MODE_RTL">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>30</y>
+           <width>101</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>RTL</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="MODE_LOITER">
+         <property name="geometry">
+          <rect>
+           <x>118</x>
+           <y>30</y>
+           <width>101</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>LOITER</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="MODE_MANUAL">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>70</y>
+           <width>101</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>MANUAL</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="MODE_POSCTL">
+         <property name="geometry">
+          <rect>
+           <x>120</x>
+           <y>70</y>
+           <width>101</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>POSCTL</string>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QGroupBox" name="Orientation">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>430</y>
+          <width>231</width>
+          <height>121</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Orientation</string>
+        </property>
+        <widget class="QLabel" name="roll">
+         <property name="geometry">
+          <rect>
+           <x>80</x>
+           <y>30</y>
+           <width>67</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>---</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="pitch">
+         <property name="geometry">
+          <rect>
+           <x>80</x>
+           <y>60</y>
+           <width>67</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>---</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="yaw">
+         <property name="geometry">
+          <rect>
+           <x>80</x>
+           <y>90</y>
+           <width>67</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>---</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="title_roll">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>30</y>
+           <width>31</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>roll</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="title_pitch">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>60</y>
+           <width>41</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>pitch</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="title_yaw">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>90</y>
+           <width>31</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>yaw</string>
          </property>
         </widget>
        </widget>
@@ -693,7 +878,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>944</width>
+     <width>840</width>
      <height>22</height>
     </rect>
    </property>
