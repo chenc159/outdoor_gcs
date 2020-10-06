@@ -54,6 +54,7 @@ public Q_SLOTS:
 	void on_MODE_LOITER_clicked(bool check);
 	void on_MODE_MANUAL_clicked(bool check);
 	void on_MODE_POSCTL_clicked(bool check);
+	void on_MODE_OFFBOARD_clicked(bool check);
 	void on_Button_Set_clicked(bool check);
 
     /******************************************

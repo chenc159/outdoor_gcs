@@ -551,7 +551,7 @@
         <property name="geometry">
          <rect>
           <x>540</x>
-          <y>150</y>
+          <y>280</y>
           <width>271</width>
           <height>111</height>
          </rect>
@@ -611,7 +611,7 @@
         <property name="geometry">
          <rect>
           <x>540</x>
-          <y>20</y>
+          <y>150</y>
           <width>271</width>
           <height>121</height>
          </rect>
@@ -717,7 +717,7 @@
           <x>20</x>
           <y>310</y>
           <width>231</width>
-          <height>111</height>
+          <height>151</height>
          </rect>
         </property>
         <property name="title">
@@ -775,13 +775,26 @@
           <string>POSCTL</string>
          </property>
         </widget>
+        <widget class="QPushButton" name="MODE_OFFBOARD">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>110</y>
+           <width>211</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>OFFBOARD</string>
+         </property>
+        </widget>
        </widget>
        <widget class="QGroupBox" name="Orientation">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>430</y>
-          <width>231</width>
+          <x>540</x>
+          <y>20</y>
+          <width>271</width>
           <height>121</height>
          </rect>
         </property>

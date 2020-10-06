@@ -59,7 +59,7 @@ bool QNode::init() {
 	uav_from_sub = n.subscribe<mavros_msgs::Mavlink>("/mavlink/from", 1, &QNode::from_callback, this);
 
 	// uav_setpoint_pub = n.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
-	uav_setpoint_pub = n.advertise<PosTarg>("/mavros/setpoint_raw/local", 10);
+	uav_setpoint_pub = n.advertise<PosTarg>("/mavros/setpoint_raw/local", 1);
 
 	uav_arming_client = n.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
 	uav_setmode_client = n.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
@@ -171,11 +171,6 @@ void QNode::Set_Home(){
 	// uav_sethome.request.latitude = uav_gps.lat*1e-7;
 	// uav_sethome.request.longitude = uav_gps.lon*1e-7;
 	// uav_sethome.request.altitude = uav_gps.alt/1000.0;
-	// uav_sethome.current_gps = true;
-	// uav_sethome.request.yaw = NaN;
-	// uav_sethome.request.latitude = uav_gps.lat;
-	// uav_sethome.request.longitude = uav_gps.lon;
-	// uav_sethome.request.altitude = uav_gps.alt/1000.0;
 	uav_sethome_client.call(uav_sethome);
 	// std::cout << uav_sethome.response.success << std::endl;
 }
@@ -187,13 +182,13 @@ void QNode::move_uav(float target[3], float target_yaw){
     //Bit 10 should set to 0, means is not force sp
     uav_setpoint.type_mask = 0b100111111000;  // 100 111 111 000  xyz + yaw
     uav_setpoint.coordinate_frame = 1;
-	// uav_setpoint.pose.position.x = target[0];
-	// uav_setpoint.pose.position.y = target[1];
-	// uav_setpoint.pose.position.z = target[2];
 	uav_setpoint.position.x = target[0];
 	uav_setpoint.position.y = target[1];
 	uav_setpoint.position.z = target[2];
 	uav_setpoint.yaw = target_yaw;
+	// uav_setpoint.pose.position.x = target[0];
+	// uav_setpoint.pose.position.y = target[1];
+	// uav_setpoint.pose.position.z = target[2];
 }
 
 State QNode::GetState(){

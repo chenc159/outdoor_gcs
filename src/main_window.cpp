@@ -102,6 +102,9 @@ void MainWindow::on_MODE_MANUAL_clicked(bool check){
 void MainWindow::on_MODE_POSCTL_clicked(bool check){
 	qnode.Set_Mode("POSCTL");
 }
+void MainWindow::on_MODE_OFFBOARD_clicked(bool check){
+	qnode.Set_Mode("OFFBOARD");
+}
 
 
 // void MainWindow::on_SET_MODE_clicked(bool check){ 
