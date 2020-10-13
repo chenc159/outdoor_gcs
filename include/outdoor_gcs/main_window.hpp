@@ -56,6 +56,8 @@ public Q_SLOTS:
 	void on_MODE_POSCTL_clicked(bool check);
 	void on_MODE_OFFBOARD_clicked(bool check);
 	void on_Button_Set_clicked(bool check);
+	void on_Button_Set_H_clicked(bool check);
+	void on_Button_Get_clicked(bool check);
 
     /******************************************
     ** Manual connections

@@ -94,6 +94,7 @@ public:
 	void Set_Mode(std::string command_mode);
 	void Set_Home();
 	void move_uav(float target[3], float target_yaw);
+	void move_uav_height(float height);
 
 	State GetState();
 	Imu GetImu();

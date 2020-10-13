@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>840</width>
-    <height>655</height>
+    <width>850</width>
+    <height>730</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -371,7 +371,7 @@
           <x>270</x>
           <y>410</y>
           <width>251</width>
-          <height>121</height>
+          <height>211</height>
          </rect>
         </property>
         <property name="title">
@@ -453,6 +453,84 @@
          </property>
          <property name="text">
           <string>pos_z</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="localvx">
+         <property name="geometry">
+          <rect>
+           <x>130</x>
+           <y>120</y>
+           <width>111</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>---</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="localvy">
+         <property name="geometry">
+          <rect>
+           <x>130</x>
+           <y>150</y>
+           <width>111</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>---</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="localvz">
+         <property name="geometry">
+          <rect>
+           <x>130</x>
+           <y>180</y>
+           <width>111</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>---</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="velx_title">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>120</y>
+           <width>67</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>vel_x</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="vely_title">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>150</y>
+           <width>67</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>vel_y</string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="velz_title">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>180</y>
+           <width>67</width>
+           <height>17</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>vel_z</string>
          </property>
         </widget>
        </widget>
@@ -553,7 +631,7 @@
           <x>540</x>
           <y>280</y>
           <width>271</width>
-          <height>111</height>
+          <height>151</height>
          </rect>
         </property>
         <property name="title">
@@ -584,8 +662,8 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>70</y>
-           <width>121</width>
+           <y>110</y>
+           <width>251</width>
            <height>31</height>
           </rect>
          </property>
@@ -604,6 +682,19 @@
          </property>
          <property name="text">
           <string>Get current pos</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="Button_Set_H">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>70</y>
+           <width>121</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Set Height</string>
          </property>
         </widget>
        </widget>
@@ -891,7 +982,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>840</width>
+     <width>850</width>
      <height>22</height>
     </rect>
    </property>

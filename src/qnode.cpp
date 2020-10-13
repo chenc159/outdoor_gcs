@@ -186,9 +186,16 @@ void QNode::move_uav(float target[3], float target_yaw){
 	uav_setpoint.position.y = target[1];
 	uav_setpoint.position.z = target[2];
 	uav_setpoint.yaw = target_yaw;
-	// uav_setpoint.pose.position.x = target[0];
-	// uav_setpoint.pose.position.y = target[1];
-	// uav_setpoint.pose.position.z = target[2];
+}
+
+void QNode::move_uav_height(float height){
+	uav_setpoint.header.stamp = ros::Time::now();
+	//Bitmask toindicate which dimensions should be ignored (1 means ignore,0 means not ignore; Bit 10 must set to 0)
+    //Bit 1:x, bit 2:y, bit 3:z, bit 4:vx, bit 5:vy, bit 6:vz, bit 7:ax, bit 8:ay, bit 9:az, bit 10:is_force_sp, bit 11:yaw, bit 12:yaw_rate
+    //Bit 10 should set to 0, means is not force sp
+    uav_setpoint.type_mask = 0b110111111011;
+    uav_setpoint.coordinate_frame = 1;
+	uav_setpoint.position.z = height;
 }
 
 State QNode::GetState(){

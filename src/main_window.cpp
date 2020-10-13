@@ -158,7 +158,7 @@ void MainWindow::on_Button_Set_clicked(bool check){
         input_is_valid = false;
     }
 
-    if(target_state[2] < 0|| target_state[2] > 20.0) {
+    if(target_state[2] < 0|| target_state[2] > 30.0) {
         input_is_valid = false;
     }
 
@@ -171,6 +171,7 @@ void MainWindow::on_Button_Set_clicked(bool check){
         ui.des_z->setText(QString::number(target_state[2], 'f', 2));
 
         qnode.move_uav(target_state, 0.0);
+    	qnode.Set_Mode("OFFBOARD");
 
     } else {
         QMessageBox msgBox;
@@ -179,12 +180,28 @@ void MainWindow::on_Button_Set_clicked(bool check){
     };
 }
 
-// void MainWindow::on_cf0_Button_Get_clicked(bool check){
-//     cf_gs::Mocap temp_mocap = qnode.GetMocap(0);
-//     ui.cf0_x_input->setText(QString::number(temp_mocap.position[0], 'f', 2));
-//     ui.cf0_y_input->setText(QString::number(temp_mocap.position[1], 'f', 2));
-//     ui.cf0_z_input->setText(QString::number(temp_mocap.position[2], 'f', 2));
-// }
+void MainWindow::on_Button_Set_H_clicked(bool check){
+    /* read values from line edit */
+    float target_height;
+    target_height =  ui.z_input->text().toFloat();
+
+    if (target_height > 0 && target_height < 30.0) {
+        ui.des_z->setText(QString::number(target_height, 'f', 2));
+        qnode.move_uav_height(target_height);
+    	qnode.Set_Mode("OFFBOARD");
+    } else {
+        QMessageBox msgBox;
+        msgBox.setText("Input position is out of range!!");
+        msgBox.exec();
+    };
+}
+
+void MainWindow::on_Button_Get_clicked(bool check){
+	Gpslocal gpsL_data = qnode.GetGPSL();
+    ui.x_input->setText(QString::number(gpsL_data.pose.pose.position.x, 'f', 2));
+    ui.y_input->setText(QString::number(gpsL_data.pose.pose.position.y, 'f', 2));
+    ui.z_input->setText(QString::number(gpsL_data.pose.pose.position.z, 'f', 2));
+}
 
 
 ////////////////////////// Update signals /////////////////////////
@@ -205,8 +222,7 @@ void MainWindow::updateuav(){
         ui.CONNECT->setText("UAV CONNECTED: " + QString::number(from_data.sysid));
         ui.Volt->setText(QString::number(bat_data.voltage, 'f', 2));
         Eigen::Quaterniond uav_quat = Eigen::Quaterniond(imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z);
-        //Transform the Quaternion to euler Angles
-        Eigen::Vector3d uav_euler = quaternion_to_euler(uav_quat);
+        Eigen::Vector3d uav_euler = quaternion_to_euler(uav_quat); //Transform the Quaternion to euler Angles
         ui.roll->setText(QString::number(uav_euler[0], 'f', 3));
         ui.pitch->setText(QString::number(uav_euler[1], 'f', 3));
         ui.yaw->setText(QString::number(uav_euler[2], 'f', 3));
@@ -268,10 +284,17 @@ void MainWindow::updateuav(){
 		ui.localx->setText(QString::number(gpsL_data.pose.pose.position.x, 'f', 6));
 		ui.localy->setText(QString::number(gpsL_data.pose.pose.position.y, 'f', 6));
 		ui.localz->setText(QString::number(gpsL_data.pose.pose.position.z, 'f', 6));
+        ui.localvx->setText(QString::number(gpsL_data.twist.twist.linear.x, 'f', 6));
+		ui.localvy->setText(QString::number(gpsL_data.twist.twist.linear.y, 'f', 6));
+		ui.localvz->setText(QString::number(gpsL_data.twist.twist.linear.z, 'f', 6));
 	}else{
         ui.localx->setText("<font color='red'>---</font>");
         ui.localy->setText("<font color='red'>---</font>");
         ui.localz->setText("<font color='red'>---</font>");
+        ui.localvx->setText("<font color='red'>---</font>");
+        ui.localvy->setText("<font color='red'>---</font>");
+        ui.localvz->setText("<font color='red'>---</font>");
+        
 	}
 
     if (signal.gpsHReceived){
