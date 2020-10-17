@@ -251,11 +251,11 @@ void MainWindow::updateuav(){
         }
 		if (state_data.armed){
 			uav_ARMED = true;
-			ui.ARM->setText("<font color='red'>DISARM</font>");
+			ui.ARM->setText("DISARM");
 		}
 		else{
 			uav_ARMED = false;
-			ui.ARM->setText("<font color='green'>ARM</font>");
+			ui.ARM->setText("ARM");
 		}
 	}else{
         ui.CONNECT->setText("<font color='red'>UAV UNCONNECTED</font>");
@@ -319,9 +319,9 @@ void MainWindow::updateuav(){
 
     if (Planning_Enabled){
         qnode.Do_Plan();
-		ui.Enable_Planning->setText("<font color='red'>Disable Planning</font>");
+		ui.Enable_Planning->setText("Disable Planning");
     }else{
-		ui.Enable_Planning->setText("<font color='green'>Enable Planning</font>");
+		ui.Enable_Planning->setText("Enable_Planning");
     }
 
 }
