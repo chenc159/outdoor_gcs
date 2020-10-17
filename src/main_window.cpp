@@ -140,6 +140,14 @@ void MainWindow::on_MODE_OFFBOARD_clicked(bool check){
 //     }
 // }
 
+void MainWindow::on_Enable Planning_clicked(bool check){
+	if (Planning_Enabled){
+        Planning_Enabled = false
+    } else{
+        Planning_Enabled = true
+    }
+}
+
 void MainWindow::on_Button_Set_clicked(bool check){
     /* read values from line edit */
     float target_state[3];
@@ -241,11 +249,11 @@ void MainWindow::updateuav(){
         }
 		if (state_data.armed){
 			uav_ARMED = true;
-			ui.ARM->setText("DISARM");
+			ui.ARM->setText("<font color='red'>DISARM</font>");
 		}
 		else{
 			uav_ARMED = false;
-			ui.ARM->setText("ARM");
+			ui.ARM->setText("<font color='green'>ARM</font>");
 		}
 	}else{
         ui.CONNECT->setText("<font color='red'>UAV UNCONNECTED</font>");
@@ -306,6 +314,13 @@ void MainWindow::updateuav(){
         ui.localy_2->setText("<font color='red'>---</font>");
         ui.localz_2->setText("<font color='red'>---</font>");
 	}
+
+    if (Planning_Enabled){
+        qnode.Do_Plan();
+		ui.Enable_Planning->setText("<font color='red'>Disable Planning</font>");
+    }else{
+		ui.Enable_Planning->setText("<font color='green'>Enable Planning</font>");
+    }
 
 }
 

@@ -95,6 +95,7 @@ public:
 	void Set_Home();
 	void move_uav(float target[3], float target_yaw);
 	void move_uav_height(float height);
+	void Do_Plan();
 
 	State GetState();
 	Imu GetImu();

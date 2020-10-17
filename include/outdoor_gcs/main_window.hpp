@@ -55,6 +55,7 @@ public Q_SLOTS:
 	void on_MODE_MANUAL_clicked(bool check);
 	void on_MODE_POSCTL_clicked(bool check);
 	void on_MODE_OFFBOARD_clicked(bool check);
+	void on_Enable_Planning_clicked(bool check);
 	void on_Button_Set_clicked(bool check);
 	void on_Button_Set_H_clicked(bool check);
 	void on_Button_Get_clicked(bool check);
@@ -68,6 +69,7 @@ private:
 	Ui::MainWindowDesign ui;
 	QNode qnode;
 	bool uav_ARMED;
+	bool Planning_Enabled = false;
 };
 
 }  // namespace outdoor_gcs

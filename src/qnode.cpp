@@ -150,6 +150,8 @@ void QNode::from_callback(const mavros_msgs::Mavlink::ConstPtr &msg){
 	uav_from = *msg;
 }
 
+
+
 void QNode::pub_command(){
 	uav_setpoint_pub.publish(uav_setpoint);
 }
@@ -196,6 +198,26 @@ void QNode::move_uav_height(float height){
     uav_setpoint.type_mask = 0b110111111011;
     uav_setpoint.coordinate_frame = 1;
 	uav_setpoint.position.z = height;
+}
+
+void QNode::Do_Plan(){
+	// for cf_id in self.cf_ids:
+	// 	other_cfs = self.cf_ids[:]
+	// 	other_cfs.remove(cf_id)
+	// 	self._dist_to_goal[str(cf_id)] = np.linalg.norm(self._pos[str(cf_id)] - self.finals[str(cf_id)])
+	// 	force = -self.c1*self._vel[str(cf_id)] - self.c2*(self._pos[str(cf_id)] - self.finals[str(cf_id)])
+	// 	for other_cf in other_cfs:
+	// 		dist_v = self._pos[str(other_cf)] - self._pos[str(cf_id)]
+	// 		dist = np.linalg.norm(dist_v)
+	// 		d = 2*self.radius + self.d_star
+	// 		CommunicationRadious = np.cbrt(3*np.square(self.MaxVelo)/(2*self.RepulsiveGradient)) + d
+	// 		if dist < CommunicationRadious:
+	// 			ForceComponent = -self.RepulsiveGradient * np.square(dist - CommunicationRadious)
+	// 			force += ForceComponent * (dist_v)/dist
+	// 		velocity_d = self._vel[str(cf_id)] + force * self.dt
+	// 		position_d = self._pos[str(cf_id)] + velocity_d*self.dt
+	// 		position_d[2] = 1.0
+	// 		self.update_pos(str(cf_id), position_d)
 }
 
 State QNode::GetState(){
