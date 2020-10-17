@@ -13,7 +13,7 @@
 #include <QMessageBox>
 #include <iostream>
 #include "../include/outdoor_gcs/main_window.hpp"
-#include "../include/outdoor_gcs/math_utils.h"
+// #include "../include/outdoor_gcs/math_utils.h"
 
 /*****************************************************************************
 ** Namespaces
@@ -140,11 +140,11 @@ void MainWindow::on_MODE_OFFBOARD_clicked(bool check){
 //     }
 // }
 
-void MainWindow::on_Enable Planning_clicked(bool check){
+void MainWindow::on_Enable_Planning_clicked(bool check){
 	if (Planning_Enabled){
-        Planning_Enabled = false
+        Planning_Enabled = false;
     } else{
-        Planning_Enabled = true
+        Planning_Enabled = true;
     }
 }
 
@@ -229,11 +229,13 @@ void MainWindow::updateuav(){
         ui.IMU_CONNECT->setText("<font color='green'>IMU CONNECTED</font>");
         ui.CONNECT->setText("UAV CONNECTED: " + QString::number(from_data.sysid));
         ui.Volt->setText(QString::number(bat_data.voltage, 'f', 2));
-        Eigen::Quaterniond uav_quat = Eigen::Quaterniond(imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z);
-        Eigen::Vector3d uav_euler = quaternion_to_euler(uav_quat); //Transform the Quaternion to euler Angles
-        ui.roll->setText(QString::number(uav_euler[0], 'f', 3));
-        ui.pitch->setText(QString::number(uav_euler[1], 'f', 3));
-        ui.yaw->setText(QString::number(uav_euler[2], 'f', 3));
+        // Eigen::Quaterniond uav_quat = Eigen::Quaterniond(imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z);
+        // Eigen::Vector3d uav_euler = quaternion_to_euler(uav_quat); //Transform the Quaternion to euler Angles
+        float quat[4] = {imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z};
+        outdoor_gcs::Angles uav_euler = qnode.quaternion_to_euler(quat);
+        ui.roll->setText(QString::number(uav_euler.roll, 'f', 3));
+        ui.pitch->setText(QString::number(uav_euler.pitch, 'f', 3));
+        ui.yaw->setText(QString::number(uav_euler.yaw, 'f', 3));
 
         if (state_data.connected){
             ui.STATE_CONNECT->setText("<font color='green'>STATE CONNECTED</font>");

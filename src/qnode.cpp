@@ -16,7 +16,6 @@
 #include <std_msgs/String.h>
 #include <sstream>
 #include "../include/outdoor_gcs/qnode.hpp"
-// #include "../include/outdoor_gcs/math_utils.h"
 
 /*****************************************************************************
 ** Namespaces
@@ -255,5 +254,14 @@ mavros_msgs::Mavlink QNode::GetFrom(){
 outdoor_gcs::signalRec QNode::Update_uav_signal(){
 	return uav_received;
 }
+
+outdoor_gcs::Angles QNode::quaternion_to_euler(float quat[4]){
+    outdoor_gcs::Angles ans;
+    ans.roll = atan2(2.0 * (quat[3] * quat[2] + quat[0] * quat[1]), 1.0 - 2.0 * (quat[1] * quat[1] + quat[2] * quat[2]));
+    ans.pitch = asin(2.0 * (quat[2] * quat[0] - quat[3] * quat[1]));
+    ans.yaw = atan2(2.0 * (quat[3] * quat[0] + quat[1] * quat[2]), 1.0 - 2.0 * (quat[2] * quat[2] + quat[3] * quat[3]));
+    return ans;
+}
+
 
 }  // namespace outdoor_gcs

@@ -22,7 +22,7 @@
 #include <ros/ros.h>
 #endif
 #include <string>
-#include <Eigen/Eigen>
+// #include <Eigen/Eigen>
 #include <QThread>
 #include <QStringListModel>
 
@@ -79,6 +79,14 @@ namespace outdoor_gcs {
 		bool gpsHReceived = false;
 	};
 
+	struct Angles
+	{
+		float roll;
+		float pitch;
+		float yaw;
+	};
+	
+
 
 class QNode : public QThread {
     Q_OBJECT
@@ -107,7 +115,7 @@ public:
 	mavros_msgs::Mavlink GetFrom();
 	outdoor_gcs::signalRec Update_uav_signal();
 
-
+	outdoor_gcs::Angles quaternion_to_euler(float quat[4]);
 
 Q_SIGNALS:
 	void rosLoopUpdate();
