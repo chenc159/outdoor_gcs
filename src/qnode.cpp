@@ -48,21 +48,21 @@ bool QNode::init() {
 	ros::start(); // explicitly needed since our nodehandle is going out of scope.
 	ros::NodeHandle n;
 	
-	uav_state_sub = n.subscribe<mavros_msgs::State>("/mavros/state", 10, &QNode::state_callback, this);
-	uav_imu_sub = n.subscribe<Imu>("/mavros/imu/data", 1, &QNode::imu_callback, this);
-	uav_gps_sub = n.subscribe<Gpsraw>("/mavros/gpsstatus/gps1/raw", 1, &QNode::gps_callback, this);
-	uav_gpsG_sub = n.subscribe<Gpsglobal>("/mavros/global_position/global", 1, &QNode::gpsG_callback, this);
-	uav_gpsL_sub = n.subscribe<Gpslocal>("/mavros/global_position/local", 1, &QNode::gpsL_callback, this);
-	uav_gpsH_sub = n.subscribe<GpsHomePos>("/mavros/home_position/home", 1, &QNode::gpsH_callback, this);
-	uav_bat_sub = n.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 1, &QNode::bat_callback, this);
-	uav_from_sub = n.subscribe<mavros_msgs::Mavlink>("/mavlink/from", 1, &QNode::from_callback, this);
+	uav_state_sub 	= n.subscribe<mavros_msgs::State>("/mavros/state", 10, &QNode::state_callback, this);
+	uav_imu_sub 	= n.subscribe<Imu>("/mavros/imu/data", 1, &QNode::imu_callback, this);
+	uav_gps_sub 	= n.subscribe<Gpsraw>("/mavros/gpsstatus/gps1/raw", 1, &QNode::gps_callback, this);
+	uav_gpsG_sub 	= n.subscribe<Gpsglobal>("/mavros/global_position/global", 1, &QNode::gpsG_callback, this);
+	uav_gpsL_sub 	= n.subscribe<Gpslocal>("/mavros/global_position/local", 1, &QNode::gpsL_callback, this);
+	uav_gpsH_sub 	= n.subscribe<GpsHomePos>("/mavros/home_position/home", 1, &QNode::gpsH_callback, this);
+	uav_bat_sub 	= n.subscribe<sensor_msgs::BatteryState>("/mavros/battery", 1, &QNode::bat_callback, this);
+	uav_from_sub 	= n.subscribe<mavros_msgs::Mavlink>("/mavlink/from", 1, &QNode::from_callback, this);
 
-	// uav_setpoint_pub = n.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
 	uav_setpoint_pub = n.advertise<PosTarg>("/mavros/setpoint_raw/local", 1);
+	uav_gps_home_pub = n.advertise<GpsHomePos>("/mavros/global_position/home", 1);
 
-	uav_arming_client = n.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
-	uav_setmode_client = n.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
-	uav_sethome_client = n.serviceClient<mavros_msgs::CommandHome>("/mavros/cmd/set_home");
+	uav_arming_client 	= n.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
+	uav_setmode_client 	= n.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
+	uav_sethome_client 	= n.serviceClient<mavros_msgs::CommandHome>("/mavros/cmd/set_home");
 	// uav_takeoff_client = n.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/takeoff");
 	// uav_land_client = n.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
 
@@ -153,7 +153,9 @@ void QNode::from_callback(const mavros_msgs::Mavlink::ConstPtr &msg){
 
 void QNode::pub_command(){
 	uav_setpoint_pub.publish(uav_setpoint);
+	uav_gps_home_pub.publish(uav_gps_home);
 }
+
 
 void QNode::Set_Arm(bool arm_disarm){
 	uav_arm.request.value = arm_disarm;
@@ -174,6 +176,16 @@ void QNode::Set_Home(){
 	// uav_sethome.request.altitude = uav_gps.alt/1000.0;
 	uav_sethome_client.call(uav_sethome);
 	// std::cout << uav_sethome.response.success << std::endl;
+}
+
+void QNode::Set_GPS_Home(){
+	uav_gps_home.geo.latitude  = uav_gps.lat*1e-7;
+	uav_gps_home.geo.longitude = uav_gps.lon*1e-7;
+	uav_gps_home.geo.altitude  = uav_gps.alt/1000.0;
+	uav_gps_home.orientation.x = uav_imu.orientation.x;
+	uav_gps_home.orientation.y = uav_imu.orientation.y;
+	uav_gps_home.orientation.z = uav_imu.orientation.z;
+	uav_gps_home.orientation.w = uav_imu.orientation.w;
 }
 
 void QNode::move_uav(float target[3], float target_yaw){
@@ -254,6 +266,7 @@ mavros_msgs::Mavlink QNode::GetFrom(){
 outdoor_gcs::signalRec QNode::Update_uav_signal(){
 	return uav_received;
 }
+
 
 outdoor_gcs::Angles QNode::quaternion_to_euler(float quat[4]){
     outdoor_gcs::Angles ans;

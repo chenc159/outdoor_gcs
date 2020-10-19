@@ -48,14 +48,13 @@
 ** Namespaces
 *****************************************************************************/
 
-using State = mavros_msgs::State;
-using Imu = sensor_msgs::Imu;
-using Gpsraw = outdoor_gcs::GPSRAW;
+using State 	= mavros_msgs::State;
+using Imu 		= sensor_msgs::Imu;
+using Gpsraw 	= outdoor_gcs::GPSRAW;
 using Gpsglobal = sensor_msgs::NavSatFix;
-// using Gpslocal = geometry_msgs::PoseWithCovarianceStamped;
-using Gpslocal = nav_msgs::Odometry;
+using Gpslocal 	= nav_msgs::Odometry;
 using GpsHomePos = outdoor_gcs::HomePosition;
-using PosTarg = mavros_msgs::PositionTarget;
+using PosTarg 	= mavros_msgs::PositionTarget;
 
 namespace outdoor_gcs {
 
@@ -101,6 +100,7 @@ public:
 	void Set_Arm(bool arm_disarm);
 	void Set_Mode(std::string command_mode);
 	void Set_Home();
+	void Set_GPS_Home();
 	void move_uav(float target[3], float target_yaw);
 	void move_uav_height(float height);
 	void Do_Plan();
@@ -139,9 +139,8 @@ private:
 	mavros_msgs::SetMode uav_setmode;
 	mavros_msgs::CommandHome uav_sethome;
 
-	// geometry_msgs::PoseStamped uav_setpoint;
 	PosTarg uav_setpoint;
-
+	GpsHomePos uav_gps_home; //origin of gps local
 	signalRec uav_received;
 
 	ros::Subscriber uav_state_sub;
@@ -154,6 +153,7 @@ private:
 	ros::Subscriber uav_from_sub;
 
 	ros::Publisher uav_setpoint_pub;
+	ros::Publisher uav_gps_home_pub;
 
 	ros::ServiceClient uav_arming_client;
 	ros::ServiceClient uav_setmode_client;

@@ -140,6 +140,10 @@ void MainWindow::on_MODE_OFFBOARD_clicked(bool check){
 //     }
 // }
 
+void MainWindow::on_Set_GPS_Home_clicked(bool check){
+	qnode.Set_GPS_Home();
+}
+
 void MainWindow::on_Enable_Planning_clicked(bool check){
 	if (Planning_Enabled){
         Planning_Enabled = false;
