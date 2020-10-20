@@ -153,7 +153,6 @@ void QNode::from_callback(const mavros_msgs::Mavlink::ConstPtr &msg){
 
 void QNode::pub_command(){
 	uav_setpoint_pub.publish(uav_setpoint);
-	uav_gps_home_pub.publish(uav_gps_home);
 }
 
 
@@ -179,13 +178,14 @@ void QNode::Set_Home(){
 }
 
 void QNode::Set_GPS_Home(){
-	uav_gps_home.geo.latitude  = uav_gps.lat*1e-7;
-	uav_gps_home.geo.longitude = uav_gps.lon*1e-7;
-	uav_gps_home.geo.altitude  = uav_gps.alt/1000.0;
+	uav_gps_home.geo.latitude  = uav_gpsG.latitude;
+	uav_gps_home.geo.longitude = uav_gpsG.longitude;
+	uav_gps_home.geo.altitude  = uav_gpsG.altitude;
 	uav_gps_home.orientation.x = uav_imu.orientation.x;
 	uav_gps_home.orientation.y = uav_imu.orientation.y;
 	uav_gps_home.orientation.z = uav_imu.orientation.z;
 	uav_gps_home.orientation.w = uav_imu.orientation.w;
+	uav_gps_home_pub.publish(uav_gps_home);
 }
 
 void QNode::move_uav(float target[3], float target_yaw){
