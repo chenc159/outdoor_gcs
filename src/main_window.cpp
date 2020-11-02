@@ -53,6 +53,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 	** Logging
 	**********************/
     QObject::connect(&qnode, SIGNAL(rosLoopUpdate()), this, SLOT(updateuav()));
+    // QObject::connect(&qnode, SIGNAL(rosLoopUpdate()), this, SLOT(updateTopics()));
 }
 
 MainWindow::~MainWindow() {}
@@ -215,6 +216,45 @@ void MainWindow::on_Button_Get_clicked(bool check){
     ui.z_input->setText(QString::number(gpsL_data.pose.pose.position.z, 'f', 2));
 }
 
+void MainWindow::on_Update_UAV_List_clicked(bool check){
+    ui.uav_detect_logger->clear();
+    all_topics = qnode.lsAllTopics();
+    UAV_Detected.clear();
+    for(int i = 0; i < DroneNumber ; i++) {
+        UAVs[i] = qnode.Get_UAV_info(i);
+        UAVs[i].rosReceived = false;
+        QString filter_word = "uav" + QString::number(i+1);
+        QStringList filtered_topics = all_topics.filter(filter_word);
+        if (filtered_topics.count() != 0){
+            UAV_Detected += filter_word;
+            UAVs[i].rosReceived = true;
+        }
+        qnode.Update_UAV_info(UAVs[i], i);
+    }
+    ui.uav_detect_logger->addItems(UAV_Detected);
+}
+
+void MainWindow::on_Set_GPS_Origin_clicked(bool check){
+    QList<QListWidgetItem *> selected_uav = ui.uav_detect_logger->selectedItems();
+    for(int i = 0; i < DroneNumber ; i++) {
+        if (selected_uav[0]->text() == "uav" + QString::number(i+1)){
+            ui.logger->addItem("uav " + QString::number(i+1) + " selected to set for origin!");
+            break;
+        }
+    }
+}
+
+void MainWindow::on_Rostopic_Update_clicked(bool check){
+    ui.rostopic_logger->clear();
+    all_topics = qnode.lsAllTopics();
+    QString filter_word = ui.topic_filter->text();
+    QStringList filtered_topics = all_topics.filter(filter_word);
+    ui.rostopic_logger->addItems(filtered_topics);
+    ui.rostopic_count->setText("Count: " +QString::number(filtered_topics.count()));
+}
+
+
+
 
 ////////////////////////// Update signals /////////////////////////
 void MainWindow::updateuav(){
@@ -227,7 +267,7 @@ void MainWindow::updateuav(){
 	Gpsglobal gpsG_data = qnode.GetGPSG();
 	Gpslocal gpsL_data = qnode.GetGPSL();
 	GpsHomePos gpsH_data = qnode.GetGPSH();
-    outdoor_gcs::signalRec signal = qnode.Update_uav_signal();
+    outdoor_gcs::signalRec signal = qnode.Get_uav_signal();
 
 	if (signal.imuReceived){
         ui.IMU_CONNECT->setText("<font color='green'>IMU CONNECTED</font>");
@@ -330,6 +370,16 @@ void MainWindow::updateuav(){
 
 }
 
+void MainWindow::updateTopics()
+{
+    ui.rostopic_logger->clear();
+    all_topics = qnode.lsAllTopics();
+    QString filter_word = ui.topic_filter->text();
+    QStringList filtered_topics = all_topics.filter(filter_word);
+    ui.rostopic_logger->addItems(filtered_topics);
+    ui.rostopic_count->setText("Count: " +QString::number(filtered_topics.count()));
+
+}
 
 
 void MainWindow::ReadSettings() {

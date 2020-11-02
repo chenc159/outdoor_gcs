@@ -20,11 +20,18 @@
 //    https://bugreports.qt.io/browse/QTBUG-22829
 #ifndef Q_MOC_RUN
 #include <ros/ros.h>
+#include <topic_tools/shape_shifter.h>
+#include <ros/message_event.h>
+#include <ros/master.h>
+#include <boost/filesystem.hpp>
+#include <boost/foreach.hpp>
 #endif
+
 #include <string>
 // #include <Eigen/Eigen>
 #include <QThread>
 #include <QStringListModel>
+
 
 #include <outdoor_gcs/GPSRAW.h>
 #include <outdoor_gcs/HomePosition.h>
@@ -84,6 +91,16 @@ namespace outdoor_gcs {
 		float pitch;
 		float yaw;
 	};
+
+	struct uav_info
+	{
+		int id = 0;
+		float pos_cur[3];
+		float pos_des[3];
+		bool rosReceived;
+		bool imuReceived;
+		bool stateReceived;
+	};
 	
 
 
@@ -95,8 +112,11 @@ public:
 	bool init();
 	void run();
 	
+	ros::master::V_TopicInfo topic_infos;
+
 	void pub_command();
 	
+	void Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind);
 	void Set_Arm(bool arm_disarm);
 	void Set_Mode(std::string command_mode);
 	void Set_Home();
@@ -113,7 +133,9 @@ public:
 	GpsHomePos GetGPSH();
 	sensor_msgs::BatteryState GetBat();
 	mavros_msgs::Mavlink GetFrom();
-	outdoor_gcs::signalRec Update_uav_signal();
+	outdoor_gcs::signalRec Get_uav_signal();
+	outdoor_gcs::uav_info Get_UAV_info(int ind);
+	QStringList lsAllTopics();
 
 	outdoor_gcs::Angles quaternion_to_euler(float quat[4]);
 
@@ -125,7 +147,9 @@ private:
 	int init_argc;
 	char** init_argv;
 	
-	int DroneNumber;
+	int DroneNumber = 10;
+	outdoor_gcs::uav_info UAVs[10];
+
 
 	mavros_msgs::State uav_state;
 	Imu uav_imu;
@@ -152,14 +176,16 @@ private:
 	ros::Subscriber uav_bat_sub;
 	ros::Subscriber uav_from_sub;
 
+	ros::Subscriber uavs_imu_sub[10];
+
 	ros::Publisher uav_setpoint_pub;
 	ros::Publisher uav_gps_home_pub;
 
 	ros::ServiceClient uav_arming_client;
 	ros::ServiceClient uav_setmode_client;
 	ros::ServiceClient uav_sethome_client;
-	// ros::ServiceClient uav_takeoff_client;
-	// ros::ServiceClient uav_land_client;
+
+	void uavs_imu_callback(const ros::MessageEvent<sensor_msgs::Imu const> &event);
 
 	void state_callback(const mavros_msgs::State::ConstPtr &msg);
 	void imu_callback(const sensor_msgs::Imu::ConstPtr &msg);

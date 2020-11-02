@@ -73,6 +73,15 @@ bool QNode::init() {
 void QNode::run() {
 	ros::Rate loop_rate(1);
 	int count = 0;
+
+	ros::NodeHandle n;
+	for (int i = 0; i < DroneNumber ; i++) {
+		if (UAVs[i].rosReceived){
+			// uavs_imu_sub[i] = n.subscribe<Imu>("/uav" + std::to_string(i) + "/mavros/imu/data", 1, &QNode::uavs_imu_callback, this);
+		}
+	}
+	// uav_imu_sub 	= n.subscribe<Imu>("/mavros/imu/data", 1, &QNode::imu_callback, this);
+
 	while ( ros::ok() ) {
 
 		pub_command();
@@ -118,14 +127,21 @@ void QNode::run() {
 	Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
 }
 
+// void QNode::uavs_imu_callback(const ros::MessageEvent<sensor_msgs::Imu const>& event){
+// 	const std::string& publisher_name = event.getPublisherName();
+// 	std::cout << publisher_name << std::endl;
+// 	// uav_received.preimu = true;
+// }
+
 void QNode::state_callback(const mavros_msgs::State::ConstPtr &msg){
 	uav_state = *msg;
 	uav_received.prestate = true;
 }
 void QNode::imu_callback(const sensor_msgs::Imu::ConstPtr &msg){
 	uav_imu = *msg;
-	uav_received.preimu = true;
 }
+
+
 void QNode::gps_callback(const outdoor_gcs::GPSRAW::ConstPtr &msg){
 	uav_gps = *msg;
 	uav_received.pregps = true;
@@ -156,6 +172,10 @@ void QNode::pub_command(){
 }
 
 
+void QNode::Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind){
+	UAVs[ind] = UAV_input;
+}
+
 void QNode::Set_Arm(bool arm_disarm){
 	uav_arm.request.value = arm_disarm;
 	uav_arming_client.call(uav_arm);
@@ -174,7 +194,6 @@ void QNode::Set_Home(){
 	// uav_sethome.request.longitude = uav_gps.lon*1e-7;
 	// uav_sethome.request.altitude = uav_gps.alt/1000.0;
 	uav_sethome_client.call(uav_sethome);
-	// std::cout << uav_sethome.response.success << std::endl;
 }
 
 void QNode::Set_GPS_Home(){
@@ -187,6 +206,8 @@ void QNode::Set_GPS_Home(){
 	uav_gps_home.orientation.w = uav_imu.orientation.w;
 	uav_gps_home_pub.publish(uav_gps_home);
 }
+
+
 
 void QNode::move_uav(float target[3], float target_yaw){
 	uav_setpoint.header.stamp = ros::Time::now();
@@ -263,10 +284,23 @@ mavros_msgs::Mavlink QNode::GetFrom(){
 	return uav_from;
 }
 
-outdoor_gcs::signalRec QNode::Update_uav_signal(){
+outdoor_gcs::signalRec QNode::Get_uav_signal(){
 	return uav_received;
 }
 
+outdoor_gcs::uav_info QNode::Get_UAV_info(int ind){
+	return UAVs[ind];
+}
+
+QStringList QNode::lsAllTopics(){
+	ros::master::getTopics(topic_infos);
+	QStringList topic_names;
+	for (const auto &it : topic_infos)
+	{
+		topic_names += QString::fromStdString(it.name);
+	}
+	return topic_names;
+}
 
 outdoor_gcs::Angles QNode::quaternion_to_euler(float quat[4]){
     outdoor_gcs::Angles ans;

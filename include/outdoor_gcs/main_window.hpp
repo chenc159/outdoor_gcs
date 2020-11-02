@@ -41,6 +41,8 @@ public:
 	void closeEvent(QCloseEvent *event); // Overloaded function
 	void showNoMasterMessage();
 
+	QStringList all_topics;
+
 public Q_SLOTS:
 	/******************************************
 	** Auto-connections (connectSlotsByName())
@@ -60,17 +62,24 @@ public Q_SLOTS:
 	void on_Button_Set_clicked(bool check);
 	void on_Button_Set_H_clicked(bool check);
 	void on_Button_Get_clicked(bool check);
+	void on_Update_UAV_List_clicked(bool check);
+	void on_Set_GPS_Origin_clicked(bool check);
+	void on_Rostopic_Update_clicked(bool check);
 
     /******************************************
     ** Manual connections
     *******************************************/
 	void updateuav();
+	void updateTopics();
 
 private:
 	Ui::MainWindowDesign ui;
 	QNode qnode;
 	bool uav_ARMED;
 	bool Planning_Enabled = false;
+	int DroneNumber = 10;
+	outdoor_gcs::uav_info UAVs[10];
+	QStringList UAV_Detected;
 };
 
 }  // namespace outdoor_gcs
