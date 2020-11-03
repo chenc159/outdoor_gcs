@@ -97,10 +97,23 @@ namespace outdoor_gcs {
 		int id = 0;
 		float pos_cur[3];
 		float pos_des[3];
-		bool rosReceived;
-		bool imuReceived;
-		bool stateReceived;
+		bool rosReceived = false;
+		bool stateReceived = false;
+		bool imuReceived = false;
+		bool gpsReceived = false;
+		bool gpsLReceived = false;
 	};
+
+	struct checkbox_status
+	{
+		bool print_imu = false;
+		bool print_state = false;
+		bool print_gps = false;
+		bool print_local = false;
+		bool print_des = false;
+		bool clear_each_print = false;
+	};
+	
 	
 
 
@@ -114,9 +127,9 @@ public:
 	
 	ros::master::V_TopicInfo topic_infos;
 
+	////////////////////// Single uav ////////////////////////////
 	void pub_command();
 	
-	void Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind);
 	void Set_Arm(bool arm_disarm);
 	void Set_Mode(std::string command_mode);
 	void Set_Home();
@@ -134,9 +147,18 @@ public:
 	sensor_msgs::BatteryState GetBat();
 	mavros_msgs::Mavlink GetFrom();
 	outdoor_gcs::signalRec Get_uav_signal();
-	outdoor_gcs::uav_info Get_UAV_info(int ind);
-	QStringList lsAllTopics();
 
+	////////////////////// Multi-uav ////////////////////////////
+	void Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind);
+
+	State GetState_uavs(int ind);
+	Imu GetImu_uavs(int ind);
+	Gpsraw GetGPS_uavs(int ind);
+	Gpslocal GetGPSL_uavs(int ind);
+	mavros_msgs::Mavlink GetFrom_uavs(int ind);
+	outdoor_gcs::uav_info Get_UAV_info(int ind);
+
+	QStringList lsAllTopics();
 	outdoor_gcs::Angles quaternion_to_euler(float quat[4]);
 
 Q_SIGNALS:
@@ -146,11 +168,8 @@ Q_SIGNALS:
 private:
 	int init_argc;
 	char** init_argv;
-	
-	int DroneNumber = 10;
-	outdoor_gcs::uav_info UAVs[10];
 
-
+	////////////////////// Single uav ////////////////////////////
 	mavros_msgs::State uav_state;
 	Imu uav_imu;
 	Gpsraw uav_gps;
@@ -176,16 +195,12 @@ private:
 	ros::Subscriber uav_bat_sub;
 	ros::Subscriber uav_from_sub;
 
-	ros::Subscriber uavs_imu_sub[10];
-
 	ros::Publisher uav_setpoint_pub;
 	ros::Publisher uav_gps_home_pub;
 
 	ros::ServiceClient uav_arming_client;
 	ros::ServiceClient uav_setmode_client;
 	ros::ServiceClient uav_sethome_client;
-
-	void uavs_imu_callback(const ros::MessageEvent<sensor_msgs::Imu const> &event);
 
 	void state_callback(const mavros_msgs::State::ConstPtr &msg);
 	void imu_callback(const sensor_msgs::Imu::ConstPtr &msg);
@@ -195,7 +210,29 @@ private:
 	void gpsH_callback(const GpsHomePos::ConstPtr &msg);
 	void bat_callback(const sensor_msgs::BatteryState::ConstPtr &msg);
 	void from_callback(const mavros_msgs::Mavlink::ConstPtr &msg);
+
+	////////////////////// Multi-uav ////////////////////////////
+	int DroneNumber = 10;
+	outdoor_gcs::uav_info UAVs_info[10];
+
+	std::vector<ros::Subscriber> uavs_state_sub;
+	std::vector<ros::Subscriber> uavs_imu_sub;
+	std::vector<ros::Subscriber> uavs_gps_sub;
+	std::vector<ros::Subscriber> uavs_gpsL_sub;
+	std::vector<ros::Subscriber> uavs_from_sub;
 	
+	mavros_msgs::State uavs_state[10];
+	Imu uavs_imu[10];
+	Gpsraw uavs_gps[10];
+	Gpslocal uavs_gpsL[10];
+	mavros_msgs::Mavlink uavs_from[10];
+	
+	void uavs_state_callback(const mavros_msgs::State::ConstPtr &msg, int ind);
+	void uavs_imu_callback(const sensor_msgs::Imu::ConstPtr &msg, int ind);
+	void uavs_gps_callback(const outdoor_gcs::GPSRAW::ConstPtr &msg, int ind);
+	void uavs_gpsL_callback(const Gpslocal::ConstPtr &msg, int ind);
+	void uavs_from_callback(const mavros_msgs::Mavlink::ConstPtr &msg, int ind);
+
 };
 
 }  // namespace outdoor_gcs

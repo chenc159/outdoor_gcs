@@ -62,24 +62,41 @@ public Q_SLOTS:
 	void on_Button_Set_clicked(bool check);
 	void on_Button_Set_H_clicked(bool check);
 	void on_Button_Get_clicked(bool check);
+
+
 	void on_Update_UAV_List_clicked(bool check);
 	void on_Set_GPS_Origin_clicked(bool check);
+	void on_InfoLogger_Clear_clicked(bool check);
+	void on_Print_IMU_clicked(bool check);
+	void on_checkBox_imu_stateChanged(int);
+	void on_checkBox_mode_stateChanged(int);
+	void on_checkBox_gps_stateChanged(int);
+	void on_checkBox_local_stateChanged(int);
+	void on_checkBox_des_stateChanged(int);
+	void on_checkBox_clear_stateChanged(int);
+
+
 	void on_Rostopic_Update_clicked(bool check);
 
     /******************************************
     ** Manual connections
     *******************************************/
 	void updateuav();
-	void updateTopics();
+	// void updateTopics();
+	void updateInfoLogger();
 
 private:
 	Ui::MainWindowDesign ui;
 	QNode qnode;
 	bool uav_ARMED;
 	bool Planning_Enabled = false;
+
 	int DroneNumber = 10;
+	std::list<int> avail_uavind;
 	outdoor_gcs::uav_info UAVs[10];
 	QStringList UAV_Detected;
+	QStringList UAV_Info_Logger;
+	outdoor_gcs::checkbox_status checkbox_stat;
 };
 
 }  // namespace outdoor_gcs

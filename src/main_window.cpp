@@ -53,7 +53,7 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 	** Logging
 	**********************/
     QObject::connect(&qnode, SIGNAL(rosLoopUpdate()), this, SLOT(updateuav()));
-    // QObject::connect(&qnode, SIGNAL(rosLoopUpdate()), this, SLOT(updateTopics()));
+    QObject::connect(&qnode, SIGNAL(rosLoopUpdate()), this, SLOT(updateInfoLogger()));
 }
 
 MainWindow::~MainWindow() {}
@@ -69,7 +69,7 @@ void MainWindow::showNoMasterMessage() {
     close();
 }
 
-////////////////////////// Buttons /////////////////////////
+////////////////////////// Single-uav Buttons /////////////////////////
 
 void MainWindow::on_ARM_clicked(bool check){
 	if (uav_ARMED){
@@ -106,40 +106,6 @@ void MainWindow::on_MODE_POSCTL_clicked(bool check){
 void MainWindow::on_MODE_OFFBOARD_clicked(bool check){
 	qnode.Set_Mode("OFFBOARD");
 }
-
-
-// void MainWindow::on_SET_MODE_clicked(bool check){ 
-//     int num = ui.MODE_INPUT->text().toInt();
-//     switch(num){
-//     case 1:
-//     	qnode.Set_Mode("AUTO.TAKEOFF");
-//         break;
-//     case 2:
-//     	qnode.Set_Mode("AUTO.LAND");
-//         break;
-//     case 3:
-//     	qnode.Set_Mode("AUTO.RTL");
-//         break;
-//     case 4:
-//     	qnode.Set_Mode("AUTO.LOITER");
-//         break;
-//     case 5:
-//     	qnode.Set_Mode("POSCTL");
-//         break;
-//     case 6:
-//     	qnode.Set_Mode("MANUAL");
-//         break;
-//     case 7:
-//     	qnode.Set_Mode("RATTITUDE");
-//         break;
-//     case 8:
-//     	qnode.Set_Mode("AUTO.MISSION");
-//         break;
-//     case 9:
-//     	qnode.Set_Mode("AUTO.READY");
-//         break;
-//     }
-// }
 
 void MainWindow::on_Set_GPS_Home_clicked(bool check){
 	qnode.Set_GPS_Home();
@@ -216,10 +182,15 @@ void MainWindow::on_Button_Get_clicked(bool check){
     ui.z_input->setText(QString::number(gpsL_data.pose.pose.position.z, 'f', 2));
 }
 
+
+
+////////////////////////// Multi-uav button /////////////////////////
+
 void MainWindow::on_Update_UAV_List_clicked(bool check){
     ui.uav_detect_logger->clear();
     all_topics = qnode.lsAllTopics();
     UAV_Detected.clear();
+    avail_uavind.clear();
     for(int i = 0; i < DroneNumber ; i++) {
         UAVs[i] = qnode.Get_UAV_info(i);
         UAVs[i].rosReceived = false;
@@ -228,22 +199,92 @@ void MainWindow::on_Update_UAV_List_clicked(bool check){
         if (filtered_topics.count() != 0){
             UAV_Detected += filter_word;
             UAVs[i].rosReceived = true;
+            avail_uavind.push_back(i);
         }
         qnode.Update_UAV_info(UAVs[i], i);
     }
     ui.uav_detect_logger->addItems(UAV_Detected);
+    // for (const auto &it : avail_uavind){
+	//     std::cout << std::to_string(it) << std::endl;
+    // }
+
 }
 
 void MainWindow::on_Set_GPS_Origin_clicked(bool check){
     QList<QListWidgetItem *> selected_uav = ui.uav_detect_logger->selectedItems();
     for(int i = 0; i < DroneNumber ; i++) {
         if (selected_uav[0]->text() == "uav" + QString::number(i+1)){
-            ui.logger->addItem("uav " + QString::number(i+1) + " selected to set for origin!");
+            ui.info_logger->addItem("uav " + QString::number(i+1) + " selected to set for origin!");
             break;
         }
     }
 }
 
+void MainWindow::on_InfoLogger_Clear_clicked(bool check){
+    ui.info_logger->clear();
+}
+
+void MainWindow::on_Print_IMU_clicked(bool check){
+    for(int i = 0; i < DroneNumber ; i++) {
+        UAVs[i] = qnode.Get_UAV_info(i);
+        if(UAVs[i].rosReceived){
+            Imu imu_data = qnode.GetImu_uavs(i);
+            float quat[4] = {imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z};
+            outdoor_gcs::Angles uav_euler = qnode.quaternion_to_euler(quat);
+            ui.info_logger->addItem("uav " + QString::number(i+1) + ": roll: " + QString::number(uav_euler.roll, 'f', 3) +
+                                ", pitch: " + QString::number(uav_euler.pitch, 'f', 3) + ", yaw: " + QString::number(uav_euler.yaw, 'f', 3));
+        }
+    }
+}
+
+// CheckBox //
+void MainWindow::on_checkBox_imu_stateChanged(int){
+    if (ui.checkBox_imu -> isChecked()){
+        checkbox_stat.print_imu = true;
+    }else{
+        checkbox_stat.print_imu = false;
+    }
+}
+void MainWindow::on_checkBox_mode_stateChanged(int){
+    if (ui.checkBox_mode -> isChecked()){
+        checkbox_stat.print_state = true;
+    }else{
+        checkbox_stat.print_state = false;
+    }
+}
+void MainWindow::on_checkBox_gps_stateChanged(int){
+    if (ui.checkBox_gps -> isChecked()){
+        checkbox_stat.print_gps = true;
+    }else{
+        checkbox_stat.print_gps = false;
+    }
+}
+void MainWindow::on_checkBox_local_stateChanged(int){
+    if (ui.checkBox_local -> isChecked()){
+        checkbox_stat.print_local = true;
+    }else{
+        checkbox_stat.print_local = false;
+    }
+}
+void MainWindow::on_checkBox_des_stateChanged(int){
+    if (ui.checkBox_des -> isChecked()){
+        checkbox_stat.print_des = true;
+    }else{
+        checkbox_stat.print_des = false;
+    }
+}
+void MainWindow::on_checkBox_clear_stateChanged(int){
+    if (ui.checkBox_clear -> isChecked()){
+        checkbox_stat.clear_each_print = true;
+    }else{
+        checkbox_stat.clear_each_print = false;
+    }
+}
+
+
+
+
+////////////////////////// Rostopic button /////////////////////////
 void MainWindow::on_Rostopic_Update_clicked(bool check){
     ui.rostopic_logger->clear();
     all_topics = qnode.lsAllTopics();
@@ -370,49 +411,99 @@ void MainWindow::updateuav(){
 
 }
 
-void MainWindow::updateTopics()
-{
-    ui.rostopic_logger->clear();
-    all_topics = qnode.lsAllTopics();
-    QString filter_word = ui.topic_filter->text();
-    QStringList filtered_topics = all_topics.filter(filter_word);
-    ui.rostopic_logger->addItems(filtered_topics);
-    ui.rostopic_count->setText("Count: " +QString::number(filtered_topics.count()));
+void MainWindow::updateInfoLogger(){
+    if (checkbox_stat.clear_each_print){
+        ui.info_logger->clear();
+    }
+    for (const auto &it : avail_uavind){
 
+        if (checkbox_stat.print_imu || checkbox_stat.print_state || checkbox_stat.print_gps ||
+            checkbox_stat.print_local || checkbox_stat.print_des){
+            UAVs[it] = qnode.Get_UAV_info(it);
+            ui.info_logger->addItem("uav " + QString::number(it+1) + " (id = " + QString::number(UAVs[it].id) + ") info: ");
+            int item_index = ui.info_logger->count()-1;
+            ui.info_logger->item(item_index)->setForeground(Qt::blue);
+        } else{ continue; }
+
+        if (checkbox_stat.print_imu){
+            Imu imu_data = qnode.GetImu_uavs(it);
+            if (UAVs[it].imuReceived){
+                float quat[4] = {imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z};
+                outdoor_gcs::Angles uav_euler = qnode.quaternion_to_euler(quat);
+                ui.info_logger->addItem("Roll: " + QString::number(uav_euler.roll, 'f', 3) + ". Pitch: " + 
+                                QString::number(uav_euler.pitch, 'f', 3) + ". Yaw: " + QString::number(uav_euler.yaw, 'f', 3));
+            }else{
+                ui.info_logger->addItem("Imu empty");
+                int item_index = ui.info_logger->count()-1;
+                ui.info_logger->item(item_index)->setForeground(Qt::red);
+            }
+        }
+        if (checkbox_stat.print_state){
+	        mavros_msgs::State state_data = qnode.GetState_uavs(it);
+            QString state_to_be_print = "State: ";
+	        if (state_data.connected){
+                state_to_be_print += "Connected! ";
+            } else{
+                state_to_be_print += "UNConnected! ";
+            }
+            if (state_data.mode.empty()){
+                state_to_be_print += "Mode Empty! ";
+            } else{
+                state_to_be_print += QString::fromStdString(state_data.mode) + "! ";
+            }
+            if (state_data.armed){
+                state_to_be_print += "ARMED!";
+            } else{
+                state_to_be_print += "DISARMED!";
+            }
+            ui.info_logger->addItem(state_to_be_print);
+        }
+        if (checkbox_stat.print_gps){
+	        outdoor_gcs::GPSRAW gps_data = qnode.GetGPS_uavs(it);
+            if (UAVs[it].gpsReceived){
+                ui.info_logger->addItem("Num: " + QString::number(gps_data.satellites_visible) + ". Lat: " + QString::number(gps_data.lat*1e-7, 'f', 7)
+                                         + ". Lon: " + QString::number(gps_data.lon*1e-7, 'f', 7) + ". Alt: " + QString::number(gps_data.alt*1e-3, 'f', 3));
+            }else{
+                ui.info_logger->addItem("GPS empty");
+                int item_index = ui.info_logger->count()-1;
+                ui.info_logger->item(item_index)->setForeground(Qt::red);
+            }
+        }
+        if (checkbox_stat.print_local){
+            Gpslocal gpsL_data = qnode.GetGPSL_uavs(it);
+            if (UAVs[it].gpsLReceived){
+                ui.info_logger->addItem("Local Position: X: " + QString::number(gpsL_data.pose.pose.position.x, 'f', 3) +
+                                        ". Y: " + QString::number(gpsL_data.pose.pose.position.y, 'f', 3) +
+                                        ". Z: " + QString::number(gpsL_data.pose.pose.position.z, 'f', 3));
+                ui.info_logger->addItem("Local Velocity: X: " + QString::number(gpsL_data.twist.twist.linear.x, 'f', 3) +
+                                        ". Y: " + QString::number(gpsL_data.twist.twist.linear.y, 'f', 3) +
+                                        ". Z: " + QString::number(gpsL_data.twist.twist.linear.z, 'f', 3));
+            }else{
+                ui.info_logger->addItem("Local empty");
+                int item_index = ui.info_logger->count()-1;
+                ui.info_logger->item(item_index)->setForeground(Qt::red);
+            }
+        }
+        if (checkbox_stat.print_des){
+            ui.info_logger->addItem("Desired Position: X: " + QString::number(UAVs[it].pos_des[0], 'f', 3) +
+                                     ". Y: " + QString::number(UAVs[it].pos_des[1], 'f', 3) + 
+                                     ". Z: " + QString::number(UAVs[it].pos_des[2], 'f', 3));
+        }
+
+        ui.info_logger->addItem("----------------------------------------------------------------------------------------");
+    }
 }
-
 
 void MainWindow::ReadSettings() {
     QSettings settings("Qt-Ros Package", "outdoor_gcs");
     restoreGeometry(settings.value("geometry").toByteArray());
     restoreState(settings.value("windowState").toByteArray());
-    // QString master_url = settings.value("master_url",QString("http://192.168.1.2:11311/")).toString();
-    // QString host_url = settings.value("host_url", QString("192.168.1.3")).toString();
-    // //QString topic_name = settings.value("topic_name", QString("/chatter")).toString();
-    // ui.line_edit_master->setText(master_url);
-    // ui.line_edit_host->setText(host_url);
-    // //ui.line_edit_topic->setText(topic_name);
-    // bool remember = settings.value("remember_settings", false).toBool();
-    // ui.checkbox_remember_settings->setChecked(remember);
-    // bool checked = settings.value("use_environment_variables", false).toBool();
-    // ui.checkbox_use_environment->setChecked(checked);
-    // if ( checked ) {
-    // 	ui.line_edit_master->setEnabled(false);
-    // 	ui.line_edit_host->setEnabled(false);
-    // 	//ui.line_edit_topic->setEnabled(false);
-    // }
 }
 
 void MainWindow::WriteSettings() {
     QSettings settings("Qt-Ros Package", "outdoor_gcs");
-    // settings.setValue("master_url",ui.line_edit_master->text());
-    // settings.setValue("host_url",ui.line_edit_host->text());
-    //settings.setValue("topic_name",ui.line_edit_topic->text());
-    // settings.setValue("use_environment_variables",QVariant(ui.checkbox_use_environment->isChecked()));
     settings.setValue("geometry", saveGeometry());
     settings.setValue("windowState", saveState());
-    // settings.setValue("remember_settings",QVariant(ui.checkbox_remember_settings->isChecked()));
-
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
