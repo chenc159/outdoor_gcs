@@ -102,6 +102,11 @@ namespace outdoor_gcs {
 		bool imuReceived = false;
 		bool gpsReceived = false;
 		bool gpsLReceived = false;
+		bool prerosReceived = false;
+		bool prestateReceived = false;
+		bool preimuReceived = false;
+		bool pregpsReceived = false;
+		bool pregpsLReceived = false;
 	};
 
 	struct checkbox_status
@@ -149,7 +154,12 @@ public:
 	outdoor_gcs::signalRec Get_uav_signal();
 
 	////////////////////// Multi-uav ////////////////////////////
+	void Set_Arm_uavs(bool arm_disarm, int ind);
+	void Set_Mode_uavs(std::string command_mode, int ind);
+	void Set_GPS_Home_uavs(int host_ind, int origin_ind);
+
 	void Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind);
+	void Update_Avail_UAVind(std::list<int> avail_uavind_input);
 
 	State GetState_uavs(int ind);
 	Imu GetImu_uavs(int ind);
@@ -214,18 +224,29 @@ private:
 	////////////////////// Multi-uav ////////////////////////////
 	int DroneNumber = 10;
 	outdoor_gcs::uav_info UAVs_info[10];
+	std::list<int> avail_uavind;
 
 	std::vector<ros::Subscriber> uavs_state_sub;
 	std::vector<ros::Subscriber> uavs_imu_sub;
 	std::vector<ros::Subscriber> uavs_gps_sub;
 	std::vector<ros::Subscriber> uavs_gpsL_sub;
 	std::vector<ros::Subscriber> uavs_from_sub;
-	
+
+	std::vector<ros::Publisher> uavs_setpoint_pub;
+	std::vector<ros::Publisher> uavs_gps_home_pub;
+
+	std::vector<ros::ServiceClient> uavs_arming_client;
+	std::vector<ros::ServiceClient> uavs_setmode_client;
+
 	mavros_msgs::State uavs_state[10];
 	Imu uavs_imu[10];
 	Gpsraw uavs_gps[10];
 	Gpslocal uavs_gpsL[10];
 	mavros_msgs::Mavlink uavs_from[10];
+	mavros_msgs::CommandBool uavs_arm[10];
+	mavros_msgs::SetMode uavs_setmode[10];
+	PosTarg uavs_setpoint[10];
+	GpsHomePos uavs_gps_home[10]; //origin of gps local
 	
 	void uavs_state_callback(const mavros_msgs::State::ConstPtr &msg, int ind);
 	void uavs_imu_callback(const sensor_msgs::Imu::ConstPtr &msg, int ind);

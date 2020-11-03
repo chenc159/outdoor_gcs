@@ -71,6 +71,10 @@ bool QNode::init() {
 	uavs_gps_sub.resize(DroneNumber);
 	uavs_gpsL_sub.resize(DroneNumber);
 	uavs_from_sub.resize(DroneNumber);
+	uavs_setpoint_pub.resize(DroneNumber);
+	uavs_gps_home_pub.resize(DroneNumber);
+	uavs_arming_client.resize(DroneNumber);
+	uavs_setmode_client.resize(DroneNumber);
 	for (int i = 0; i < DroneNumber ; i++) {
 		// std::cout << "/uav" + std::to_string(i+1) + "/mavros/imu/data" << std::endl;
 		// std::string name = "/uav" + std::to_string(i+1) + "/mavros/imu/data";
@@ -79,6 +83,13 @@ bool QNode::init() {
 		uavs_gps_sub[i] 	= n.subscribe<Gpsraw>("/uav" + std::to_string(i+1) + "/mavros/gpsstatus/gps1/raw", 1, std::bind(&QNode::uavs_gps_callback, this, std::placeholders::_1, i));
 		uavs_gpsL_sub[i] 	= n.subscribe<Gpslocal>("/uav" + std::to_string(i+1) + "/mavros/global_position/local", 1, std::bind(&QNode::uavs_gpsL_callback, this, std::placeholders::_1, i));
 		uavs_from_sub[i] 	= n.subscribe<mavros_msgs::Mavlink>("/uav" + std::to_string(i+1) + "/mavlink/from", 1, std::bind(&QNode::uavs_from_callback, this, std::placeholders::_1, i));
+	
+		uavs_setpoint_pub[i] = n.advertise<PosTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/local", 1);
+		uavs_gps_home_pub[i] = n.advertise<GpsHomePos>("/uav" + std::to_string(i+1) + "/mavros/global_position/home", 1);
+
+		uavs_arming_client[i] 	= n.serviceClient<mavros_msgs::CommandBool>("/uav" + std::to_string(i+1) +"/mavros/cmd/arming");
+		uavs_setmode_client[i] 	= n.serviceClient<mavros_msgs::SetMode>("/uav" + std::to_string(i+1) +"/mavros/set_mode");
+	
 	}
 
 	start();
@@ -124,6 +135,31 @@ void QNode::run() {
 		uav_received.pregpsG = false;
 		uav_received.pregpsL = false;
 		uav_received.pregpsH = false;
+
+
+    	for (const auto &i : avail_uavind){
+			UAVs_info[i].stateReceived = false;
+			UAVs_info[i].imuReceived = false;
+			UAVs_info[i].gpsReceived = false;
+			UAVs_info[i].gpsLReceived = false;
+			if (UAVs_info[i].prestateReceived){
+				UAVs_info[i].stateReceived = true;
+			}
+			if (UAVs_info[i].preimuReceived){
+				UAVs_info[i].imuReceived = true;
+			}
+			if (UAVs_info[i].pregpsReceived){
+				UAVs_info[i].gpsReceived = true;
+			}
+			if (UAVs_info[i].pregpsLReceived){
+				UAVs_info[i].gpsLReceived = true;
+			}
+			UAVs_info[i].prestateReceived = false;
+			UAVs_info[i].preimuReceived = false;
+			UAVs_info[i].pregpsReceived = false;
+			UAVs_info[i].pregpsLReceived = false;
+		}
+
 
 		/* signal a ros loop update  */
 		Q_EMIT rosLoopUpdate();
@@ -269,31 +305,51 @@ outdoor_gcs::signalRec QNode::Get_uav_signal(){
 }
 
 
-//////////////////////// Multi-uav ///////////////////////////
+////////////////////////////////////////////// Multi-uav ///////////////////////////////////////////////////
+
 void QNode::uavs_state_callback(const mavros_msgs::State::ConstPtr &msg, int ind){
 	uavs_state[ind] = *msg;
-	UAVs_info[ind].stateReceived = true;
+	UAVs_info[ind].prestateReceived = true;
 }
 void QNode::uavs_imu_callback(const sensor_msgs::Imu::ConstPtr &msg, int ind){
 	uavs_imu[ind] = *msg;
-	UAVs_info[ind].imuReceived = true;
+	UAVs_info[ind].preimuReceived = true;
 }
 void QNode::uavs_gps_callback(const outdoor_gcs::GPSRAW::ConstPtr &msg, int ind){
 	uavs_gps[ind] = *msg;
-	UAVs_info[ind].gpsReceived = true;
+	UAVs_info[ind].pregpsReceived = true;
 }
 void QNode::uavs_gpsL_callback(const Gpslocal::ConstPtr &msg, int ind){
 	uavs_gpsL[ind] = *msg;
-	UAVs_info[ind].gpsLReceived = true;
+	UAVs_info[ind].pregpsLReceived = true;
+	UAVs_info[ind].pos_cur[0] = uavs_gpsL[ind].pose.pose.position.x;
+	UAVs_info[ind].pos_cur[1] = uavs_gpsL[ind].pose.pose.position.y;
+	UAVs_info[ind].pos_cur[2] = uavs_gpsL[ind].pose.pose.position.z;
 }
 void QNode::uavs_from_callback(const mavros_msgs::Mavlink::ConstPtr &msg, int ind){
 	uavs_from[ind] = *msg;
 	UAVs_info[ind].id = uavs_from[ind].sysid;
 }
 
+void QNode::Set_Arm_uavs(bool arm_disarm, int ind){
+	uavs_arm[ind].request.value = arm_disarm;
+	uavs_arming_client[ind].call(uavs_arm[ind]);
+}
+void QNode::Set_Mode_uavs(std::string command_mode, int ind){
+	uavs_setmode[ind].request.custom_mode = command_mode;
+	uavs_setmode_client[ind].call(uavs_setmode[ind]);
+}
+void QNode::Set_GPS_Home_uavs(int host_ind, int origin_ind){
+	uavs_gps_home[host_ind].geo.latitude  = uavs_gps[origin_ind].lat*1e-7;
+	uavs_gps_home[host_ind].geo.longitude = uavs_gps[origin_ind].lon*1e-7;
+	uavs_gps_home_pub[host_ind].publish(uavs_gps_home[host_ind]);
+}
 
 void QNode::Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind){
 	UAVs_info[ind] = UAV_input;
+}
+void QNode::Update_Avail_UAVind(std::list<int> avail_uavind_input){
+	avail_uavind = avail_uavind_input;
 }
 
 State QNode::GetState_uavs(int ind){
