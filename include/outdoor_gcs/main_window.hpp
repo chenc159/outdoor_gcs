@@ -65,6 +65,14 @@ public Q_SLOTS:
 
 	void on_Update_UAV_List_clicked(bool check);
 	void on_Set_GPS_Origin_clicked(bool check);
+	void on_Button_Get_All_clicked(bool check);
+	void on_Button_Set_All_Height_clicked(bool check);
+	void on_Button_Set_All_clicked(bool check);
+	void on_ARM_ONE_clicked(bool check);
+	void on_DISARM_ONE_clicked(bool check);
+	void on_TAKEOFF_ONE_clicked(bool check);
+	void on_LAND_ONE_clicked(bool check);
+	void on_Button_Move_All_clicked(bool check);
 	void on_ARM_ALL_clicked(bool check);
 	void on_DISARM_ALL_clicked(bool check);
 	void on_TAKEOFF_ALL_clicked(bool check);

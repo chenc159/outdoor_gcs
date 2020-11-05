@@ -96,6 +96,7 @@ namespace outdoor_gcs {
 	{
 		int id = 0;
 		float pos_cur[3];
+		float vel_cur[3];
 		float pos_des[3];
 		bool rosReceived = false;
 		bool stateReceived = false;

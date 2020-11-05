@@ -193,7 +193,6 @@ void MainWindow::on_Update_UAV_List_clicked(bool check){
     UAV_Detected.clear();
     avail_uavind.clear();
     for(int i = 0; i < DroneNumber ; i++) {
-        UAVs[i] = qnode.Get_UAV_info(i);
         UAVs[i].rosReceived = false;
         QString filter_word = "uav" + QString::number(i+1) + "/mavlink/from";
         QStringList filtered_topics = all_topics.filter(filter_word);
@@ -206,7 +205,7 @@ void MainWindow::on_Update_UAV_List_clicked(bool check){
     }
     qnode.Update_Avail_UAVind(avail_uavind);
     ui.uav_detect_logger->addItems(UAV_Detected);
-    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Updated available uav list!");
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Available uav list updated!");
 }
 
 void MainWindow::on_Set_GPS_Origin_clicked(bool check){
@@ -225,31 +224,222 @@ void MainWindow::on_Set_GPS_Origin_clicked(bool check){
             qnode.Set_GPS_Home_uavs(i, origin_ind);
         }
     } else{
-        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav!");
+        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to set GPS origin!");
         int item_index = ui.notice_logger->count()-1;
         ui.notice_logger->item(item_index)->setForeground(Qt::red);
     }
 }
 
+void MainWindow::on_Button_Get_All_clicked(bool check){
+    if (ui.uav_detect_logger->selectedItems().count()!=0){
+        QList<QListWidgetItem *> selected_uav = ui.uav_detect_logger->selectedItems();
+        for (const auto &i : avail_uavind){
+            if (selected_uav[0]->text() == "uav" + QString::number(i+1)){
+                ui.x_input_all->setText(QString::number(UAVs[i].pos_cur[0], 'f', 2));
+                ui.y_input_all->setText(QString::number(UAVs[i].pos_cur[1], 'f', 2));
+                ui.z_input_all->setText(QString::number(UAVs[i].pos_cur[2], 'f', 2));
+                ui.notice_logger->addItem(QTime::currentTime().toString() + " : Got current location for uav " + QString::number(i+1) + "!");
+                int item_index = ui.notice_logger->count()-1;
+                ui.notice_logger->item(item_index)->setForeground(Qt::blue);
+                break;
+            }
+        }
+    } else{
+        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to get current location!");
+        int item_index = ui.notice_logger->count()-1;
+        ui.notice_logger->item(item_index)->setForeground(Qt::red);
+    }
+}
+
+
+void MainWindow::on_Button_Set_All_Height_clicked(bool check){
+    /* read values from line edit */
+    float target_height;
+    target_height =  ui.z_input_all->text().toFloat();
+
+    if (target_height > 0 && target_height < 30.0) {
+        for (const auto &i : avail_uavind){
+            UAVs[i].pos_des[2] = target_height;
+            qnode.Update_UAV_info(UAVs[i], i);
+            ui.notice_logger->addItem(QTime::currentTime().toString() + " : Desired height of uav " + QString::number(i+1) + " is set to " + QString::number(target_height));
+            int item_index = ui.notice_logger->count()-1;
+            ui.notice_logger->item(item_index)->setForeground(Qt::green);
+        }
+    } else {
+        // QMessageBox msgBox;
+        // msgBox.setText("Input position is out of range!!");
+        // msgBox.exec();
+        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Input height is out of range!");
+        int item_index = ui.notice_logger->count()-1;
+        ui.notice_logger->item(item_index)->setForeground(Qt::red);
+    };
+}
+
+void MainWindow::on_Button_Set_All_clicked(bool check){
+    /* read values from line edit */
+    if (ui.uav_detect_logger->selectedItems().count()!=0){
+        QList<QListWidgetItem *> selected_uav = ui.uav_detect_logger->selectedItems();
+
+        float target_state[3];
+        target_state[0] =  ui.x_input_all->text().toFloat();
+        target_state[1] =  ui.y_input_all->text().toFloat();
+        target_state[2] =  ui.z_input_all->text().toFloat();
+        /*----------------determine whether the input is in safe range ------------------*/
+        bool input_is_valid = true;
+
+        if(target_state[0] < -10.0 || target_state[0] > 10.0) {
+            input_is_valid = false;
+        }
+
+        if(target_state[1] < -10.0 || target_state[1] > 10.0) {
+            input_is_valid = false;
+        }
+
+        if(target_state[2] < 0|| target_state[2] > 30.0) {
+            input_is_valid = false;
+        }
+
+        /*----------------send input ------------------*/
+
+        if(input_is_valid){
+            for (const auto &i : avail_uavind){
+                if (selected_uav[0]->text() == "uav" + QString::number(i+1)){
+                    UAVs[i].pos_des[0] = target_state[0];
+                    UAVs[i].pos_des[1] = target_state[1];
+                    UAVs[i].pos_des[2] = target_state[2];
+                    qnode.Update_UAV_info(UAVs[i], i);
+                    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Desired location of uav " + QString::number(i+1) + " is set! ");
+                    int item_index = ui.notice_logger->count()-1;
+                    ui.notice_logger->item(item_index)->setForeground(Qt::green);
+                    break;
+                }
+            }
+        } else {
+            // QMessageBox msgBox;
+            // msgBox.setText("Input position is out of range!!");
+            // msgBox.exec();
+            ui.notice_logger->addItem(QTime::currentTime().toString() + " : Input height is out of range!");
+            int item_index = ui.notice_logger->count()-1;
+            ui.notice_logger->item(item_index)->setForeground(Qt::red);
+        };
+
+    } else{
+        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to assign desired location!");
+        int item_index = ui.notice_logger->count()-1;
+        ui.notice_logger->item(item_index)->setForeground(Qt::red);
+    }
+}
+
+void MainWindow::on_ARM_ONE_clicked(bool check){
+    if (ui.uav_detect_logger->selectedItems().count()!=0){
+        QList<QListWidgetItem *> selected_uav = ui.uav_detect_logger->selectedItems();
+        for (const auto &i : avail_uavind){
+            if (selected_uav[0]->text() == "uav" + QString::number(i+1)){
+                qnode.Set_Arm_uavs(true, i);
+                ui.notice_logger->addItem(QTime::currentTime().toString() + " : Command for uav " + QString::number(i+1) + " to ARM is sent!");
+                int item_index = ui.notice_logger->count()-1;
+                ui.notice_logger->item(item_index)->setForeground(Qt::blue);
+                break;
+            }
+        }
+    } else{
+        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to arm!");
+        int item_index = ui.notice_logger->count()-1;
+        ui.notice_logger->item(item_index)->setForeground(Qt::red);
+    }
+}
+void MainWindow::on_DISARM_ONE_clicked(bool check){
+    if (ui.uav_detect_logger->selectedItems().count()!=0){
+        QList<QListWidgetItem *> selected_uav = ui.uav_detect_logger->selectedItems();
+        for (const auto &i : avail_uavind){
+            if (selected_uav[0]->text() == "uav" + QString::number(i+1)){
+                qnode.Set_Arm_uavs(false, i);
+                ui.notice_logger->addItem(QTime::currentTime().toString() + " : Command for uav " + QString::number(i+1) + " to DISARM is sent!");
+                int item_index = ui.notice_logger->count()-1;
+                ui.notice_logger->item(item_index)->setForeground(Qt::blue);
+                break;
+            }
+        }
+    } else{
+        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to disarm!");
+        int item_index = ui.notice_logger->count()-1;
+        ui.notice_logger->item(item_index)->setForeground(Qt::red);
+    }
+}
+void MainWindow::on_TAKEOFF_ONE_clicked(bool check){
+    if (ui.uav_detect_logger->selectedItems().count()!=0){
+        QList<QListWidgetItem *> selected_uav = ui.uav_detect_logger->selectedItems();
+        for (const auto &i : avail_uavind){
+            if (selected_uav[0]->text() == "uav" + QString::number(i+1)){
+        	    qnode.Set_Mode_uavs("AUTO.TAKEOFF", i);
+                ui.notice_logger->addItem(QTime::currentTime().toString() + " : Command for uav " + QString::number(i+1) + " to TAKEOFF is sent!");
+                int item_index = ui.notice_logger->count()-1;
+                ui.notice_logger->item(item_index)->setForeground(Qt::blue);
+                break;
+            }
+        }
+    } else{
+        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to takeoff!");
+        int item_index = ui.notice_logger->count()-1;
+        ui.notice_logger->item(item_index)->setForeground(Qt::red);
+    }
+}
+void MainWindow::on_LAND_ONE_clicked(bool check){
+    if (ui.uav_detect_logger->selectedItems().count()!=0){
+        QList<QListWidgetItem *> selected_uav = ui.uav_detect_logger->selectedItems();
+        for (const auto &i : avail_uavind){
+            if (selected_uav[0]->text() == "uav" + QString::number(i+1)){
+        	    qnode.Set_Mode_uavs("AUTO.LAND", i);
+                ui.notice_logger->addItem(QTime::currentTime().toString() + " : Command for uav " + QString::number(i+1) + " to LAND is sent!");
+                int item_index = ui.notice_logger->count()-1;
+                ui.notice_logger->item(item_index)->setForeground(Qt::blue);
+                break;
+            }
+        }
+    } else{
+        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to land!");
+        int item_index = ui.notice_logger->count()-1;
+        ui.notice_logger->item(item_index)->setForeground(Qt::red);
+    }
+}
+
+void MainWindow::on_Button_Move_All_clicked(bool check){
+}
+
+
+
+
 void MainWindow::on_ARM_ALL_clicked(bool check){
     for (const auto &i : avail_uavind){
         qnode.Set_Arm_uavs(true, i);
     }
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Arm all uavs command sent!");
+    int item_index = ui.notice_logger->count()-1;
+    ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }
 void MainWindow::on_DISARM_ALL_clicked(bool check){
     for (const auto &i : avail_uavind){
         qnode.Set_Arm_uavs(false, i);
     }
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Disarm all uavs command sent!");
+    int item_index = ui.notice_logger->count()-1;
+    ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }
 void MainWindow::on_TAKEOFF_ALL_clicked(bool check){
     for (const auto &i : avail_uavind){
 	    qnode.Set_Mode_uavs("AUTO.TAKEOFF", i);
     }
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Takeoff all uavs command sent!");
+    int item_index = ui.notice_logger->count()-1;
+    ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }
 void MainWindow::on_LAND_ALL_clicked(bool check){
     for (const auto &i : avail_uavind){
 	    qnode.Set_Mode_uavs("AUTO.LAND", i);
     }
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Land all uavs command sent!");
+    int item_index = ui.notice_logger->count()-1;
+    ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }
 
 void MainWindow::on_InfoLogger_Clear_clicked(bool check){
@@ -437,6 +627,10 @@ void MainWindow::updateuavs(){
         ui.notice_logger->item(item_index)->setForeground(Qt::red);
     }
     ui.notice_logger->scrollToBottom();
+
+    for (const auto &it : avail_uavind){
+        UAVs[it] = qnode.Get_UAV_info(it);
+    }
 }
 
 
@@ -449,7 +643,6 @@ void MainWindow::updateInfoLogger(){
 
         if (checkbox_stat.print_imu || checkbox_stat.print_state || checkbox_stat.print_gps ||
             checkbox_stat.print_local || checkbox_stat.print_des){
-            UAVs[it] = qnode.Get_UAV_info(it);
             ui.info_logger->addItem("uav " + QString::number(it+1) + " (id = " + QString::number(UAVs[it].id) + ") info: ");
             int item_index = ui.info_logger->count()-1;
             ui.info_logger->item(item_index)->setForeground(Qt::blue);
@@ -500,14 +693,21 @@ void MainWindow::updateInfoLogger(){
             }
         }
         if (checkbox_stat.print_local){
-            Gpslocal gpsL_data = qnode.GetGPSL_uavs(it);
+            // Gpslocal gpsL_data = qnode.GetGPSL_uavs(it);
             if (UAVs[it].gpsLReceived){
-                ui.info_logger->addItem("Local Position: X: " + QString::number(gpsL_data.pose.pose.position.x, 'f', 3) +
-                                        ". Y: " + QString::number(gpsL_data.pose.pose.position.y, 'f', 3) +
-                                        ". Z: " + QString::number(gpsL_data.pose.pose.position.z, 'f', 3));
-                ui.info_logger->addItem("Local Velocity: X: " + QString::number(gpsL_data.twist.twist.linear.x, 'f', 3) +
-                                        ". Y: " + QString::number(gpsL_data.twist.twist.linear.y, 'f', 3) +
-                                        ". Z: " + QString::number(gpsL_data.twist.twist.linear.z, 'f', 3));
+                // ui.info_logger->addItem("Local Position: X: " + QString::number(gpsL_data.pose.pose.position.x, 'f', 3) +
+                //                         ". Y: " + QString::number(gpsL_data.pose.pose.position.y, 'f', 3) +
+                //                         ". Z: " + QString::number(gpsL_data.pose.pose.position.z, 'f', 3));
+                // ui.info_logger->addItem("Local Velocity: X: " + QString::number(gpsL_data.twist.twist.linear.x, 'f', 3) +
+                //                         ". Y: " + QString::number(gpsL_data.twist.twist.linear.y, 'f', 3) +
+                //                         ". Z: " + QString::number(gpsL_data.twist.twist.linear.z, 'f', 3));
+                ui.info_logger->addItem("Local Position: X: " + QString::number(UAVs[it].pos_cur[0], 'f', 3) +
+                                        ". Y: " + QString::number(UAVs[it].pos_cur[1], 'f', 3) +
+                                        ". Z: " + QString::number(UAVs[it].pos_cur[2], 'f', 3));
+                ui.info_logger->addItem("Local Velocity: X: " + QString::number(UAVs[it].vel_cur[0], 'f', 3) +
+                                        ". Y: " + QString::number(UAVs[it].vel_cur[1], 'f', 3) +
+                                        ". Z: " + QString::number(UAVs[it].vel_cur[2], 'f', 3));
+
             }else{
                 ui.info_logger->addItem("Local empty");
                 int item_index = ui.info_logger->count()-1;

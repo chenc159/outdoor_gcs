@@ -325,6 +325,9 @@ void QNode::uavs_gpsL_callback(const Gpslocal::ConstPtr &msg, int ind){
 	UAVs_info[ind].pos_cur[0] = uavs_gpsL[ind].pose.pose.position.x;
 	UAVs_info[ind].pos_cur[1] = uavs_gpsL[ind].pose.pose.position.y;
 	UAVs_info[ind].pos_cur[2] = uavs_gpsL[ind].pose.pose.position.z;
+	UAVs_info[ind].vel_cur[0] = uavs_gpsL[ind].twist.twist.linear.x;
+	UAVs_info[ind].vel_cur[1] = uavs_gpsL[ind].twist.twist.linear.y;
+	UAVs_info[ind].vel_cur[2] = -uavs_gpsL[ind].twist.twist.linear.z; //Somehow z-velocity is in opposite direction
 }
 void QNode::uavs_from_callback(const mavros_msgs::Mavlink::ConstPtr &msg, int ind){
 	uavs_from[ind] = *msg;
