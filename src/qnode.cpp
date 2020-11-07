@@ -72,6 +72,7 @@ bool QNode::init() {
 	uavs_gpsL_sub.resize(DroneNumber);
 	uavs_from_sub.resize(DroneNumber);
 	uavs_setpoint_pub.resize(DroneNumber);
+	uavs_setpoint_alt_pub.resize(DroneNumber);
 	uavs_gps_home_pub.resize(DroneNumber);
 	uavs_arming_client.resize(DroneNumber);
 	uavs_setmode_client.resize(DroneNumber);
@@ -85,6 +86,7 @@ bool QNode::init() {
 		uavs_from_sub[i] 	= n.subscribe<mavros_msgs::Mavlink>("/uav" + std::to_string(i+1) + "/mavlink/from", 1, std::bind(&QNode::uavs_from_callback, this, std::placeholders::_1, i));
 	
 		uavs_setpoint_pub[i] = n.advertise<PosTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/local", 1);
+		uavs_setpoint_alt_pub[i] = n.advertise<PosTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/attitude", 1);
 		uavs_gps_home_pub[i] = n.advertise<GpsHomePos>("/uav" + std::to_string(i+1) + "/mavros/global_position/home", 1);
 
 		uavs_arming_client[i] 	= n.serviceClient<mavros_msgs::CommandBool>("/uav" + std::to_string(i+1) +"/mavros/cmd/arming");
@@ -347,6 +349,30 @@ void QNode::Set_GPS_Home_uavs(int host_ind, int origin_ind){
 	uavs_gps_home[host_ind].geo.longitude = uavs_gps[origin_ind].lon*1e-7;
 	uavs_gps_home_pub[host_ind].publish(uavs_gps_home[host_ind]);
 }
+
+void QNode::move_uavs(int ind){
+	uavs_setpoint[ind].header.stamp = ros::Time::now();
+    uavs_setpoint[ind].type_mask = 0b100111111000;  // 100 111 111 000  xyz + yaw
+    uavs_setpoint[ind].coordinate_frame = 1;
+	uavs_setpoint[ind].position.x = UAVs_info[ind].pos_des[0] - UAVs_info[ind].pos_ini[0];
+	uavs_setpoint[ind].position.y = UAVs_info[ind].pos_des[1] - UAVs_info[ind].pos_ini[1];
+	uavs_setpoint[ind].position.z = UAVs_info[ind].pos_des[2] - UAVs_info[ind].pos_ini[2];
+	uavs_setpoint[ind].yaw = 0.0;
+	uavs_setpoint_pub[ind].publish(uavs_setpoint[ind]);
+	Set_Mode_uavs("OFFBOARD", ind);
+}
+
+// void QNode::Move_uavs_alt(int ind){
+// 	uavs_setpoint_alt[ind].orientation.x = 
+// 	uavs_setpoint_alt[ind].orientation.y = 
+// 	uavs_setpoint_alt[ind].orientation.z = 
+// 	uavs_setpoint_alt[ind].orientation.w =
+// 	uavs_setpoint_alt[ind].thrust = 
+// }
+
+// void QNode::pos_controller_cascade_pid_pos_controller(int ind){
+
+// }
 
 void QNode::Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind){
 	UAVs_info[ind] = UAV_input;

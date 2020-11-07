@@ -48,7 +48,7 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <mavros_msgs/PositionTarget.h>
-
+#include <mavros_msgs/AttitudeTarget.h>
 
 
 /*****************************************************************************
@@ -62,6 +62,7 @@ using Gpsglobal = sensor_msgs::NavSatFix;
 using Gpslocal 	= nav_msgs::Odometry;
 using GpsHomePos = outdoor_gcs::HomePosition;
 using PosTarg 	= mavros_msgs::PositionTarget;
+using AltTarg 	= mavros_msgs::AttitudeTarget;
 
 namespace outdoor_gcs {
 
@@ -95,9 +96,10 @@ namespace outdoor_gcs {
 	struct uav_info
 	{
 		int id = 0;
-		float pos_cur[3];
-		float vel_cur[3];
-		float pos_des[3];
+		float pos_cur[3] = {0};
+		float vel_cur[3] = {0};
+		float pos_ini[3] = {0};
+		float pos_des[3] = {0};
 		bool rosReceived = false;
 		bool stateReceived = false;
 		bool imuReceived = false;
@@ -158,6 +160,7 @@ public:
 	void Set_Arm_uavs(bool arm_disarm, int ind);
 	void Set_Mode_uavs(std::string command_mode, int ind);
 	void Set_GPS_Home_uavs(int host_ind, int origin_ind);
+	void move_uavs(int ind);
 
 	void Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind);
 	void Update_Avail_UAVind(std::list<int> avail_uavind_input);
@@ -234,6 +237,7 @@ private:
 	std::vector<ros::Subscriber> uavs_from_sub;
 
 	std::vector<ros::Publisher> uavs_setpoint_pub;
+	std::vector<ros::Publisher> uavs_setpoint_alt_pub;	
 	std::vector<ros::Publisher> uavs_gps_home_pub;
 
 	std::vector<ros::ServiceClient> uavs_arming_client;
@@ -247,6 +251,7 @@ private:
 	mavros_msgs::CommandBool uavs_arm[10];
 	mavros_msgs::SetMode uavs_setmode[10];
 	PosTarg uavs_setpoint[10];
+	AltTarg uavs_setpoint_alt[10];
 	GpsHomePos uavs_gps_home[10]; //origin of gps local
 	
 	void uavs_state_callback(const mavros_msgs::State::ConstPtr &msg, int ind);

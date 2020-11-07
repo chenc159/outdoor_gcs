@@ -183,6 +183,119 @@ void MainWindow::on_Button_Get_clicked(bool check){
     ui.z_input->setText(QString::number(gpsL_data.pose.pose.position.z, 'f', 2));
 }
 
+////////////////////////// Update signals /////////////////////////
+void MainWindow::updateuav(){
+
+	mavros_msgs::State state_data = qnode.GetState();
+    Imu imu_data = qnode.GetImu();
+    sensor_msgs::BatteryState bat_data = qnode.GetBat();
+	mavros_msgs::Mavlink from_data = qnode.GetFrom();
+	outdoor_gcs::GPSRAW gps_data = qnode.GetGPS();
+	Gpsglobal gpsG_data = qnode.GetGPSG();
+	Gpslocal gpsL_data = qnode.GetGPSL();
+	GpsHomePos gpsH_data = qnode.GetGPSH();
+    outdoor_gcs::signalRec signal = qnode.Get_uav_signal();
+
+	if (signal.imuReceived){
+        ui.IMU_CONNECT->setText("<font color='green'>IMU CONNECTED</font>");
+        ui.CONNECT->setText("UAV CONNECTED: " + QString::number(from_data.sysid));
+        ui.Volt->setText(QString::number(bat_data.voltage, 'f', 2));
+        // Eigen::Quaterniond uav_quat = Eigen::Quaterniond(imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z);
+        // Eigen::Vector3d uav_euler = quaternion_to_euler(uav_quat); //Transform the Quaternion to euler Angles
+        float quat[4] = {imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z};
+        outdoor_gcs::Angles uav_euler = qnode.quaternion_to_euler(quat);
+        ui.roll->setText(QString::number(uav_euler.roll, 'f', 3));
+        ui.pitch->setText(QString::number(uav_euler.pitch, 'f', 3));
+        ui.yaw->setText(QString::number(uav_euler.yaw, 'f', 3));
+
+        if (state_data.connected){
+            ui.STATE_CONNECT->setText("<font color='green'>STATE CONNECTED</font>");
+        }
+        else{
+            ui.STATE_CONNECT->setText("<font color='red'>STATE UNCONNECTED</font>");
+        }
+        if (state_data.mode.empty()){
+            ui.MODE->setText("<font color='red'>---</font>");
+        }
+        else{
+		    ui.MODE->setText(QString::fromStdString(state_data.mode));
+        }
+		if (state_data.armed){
+			uav_ARMED = true;
+			ui.ARM->setText("DISARM");
+		}
+		else{
+			uav_ARMED = false;
+			ui.ARM->setText("ARM");
+		}
+	}else{
+        ui.CONNECT->setText("<font color='red'>UAV UNCONNECTED</font>");
+        ui.STATE_CONNECT->setText("<font color='red'>STATE UNCONNECTED</font>");
+        ui.IMU_CONNECT->setText("<font color='red'>IMU UNCONNECTED</font>");
+        ui.Volt->setText("<font color='red'>---</font>");
+        ui.MODE->setText("<font color='red'>---</font>");
+        ui.roll->setText("<font color='red'>---</font>");
+        ui.pitch->setText("<font color='red'>---</font>");
+        ui.yaw->setText("<font color='red'>---</font>");
+	}
+
+	if (signal.gpsReceived){
+        ui.gps_num->setText(QString::number(gps_data.satellites_visible));
+		ui.gps_lat->setText(QString::number(gps_data.lat*1e-7, 'f', 7));
+		ui.gps_lon->setText(QString::number(gps_data.lon*1e-7, 'f', 7));
+		ui.gps_alt->setText(QString::number(gps_data.alt*1e-3, 'f', 3));
+	}else{
+		ui.gps_num->setText("<font color='red'>---</font>");
+        ui.gps_lat->setText("<font color='red'>---</font>");
+        ui.gps_lon->setText("<font color='red'>---</font>");
+        ui.gps_alt->setText("<font color='red'>---</font>");
+	}
+
+    if (signal.gpsGReceived){
+		ui.gps_lat_2->setText(QString::number(gpsG_data.latitude, 'f', 6));
+		ui.gps_lon_2->setText(QString::number(gpsG_data.longitude, 'f', 6));
+		ui.gps_alt_2->setText(QString::number(gpsG_data.altitude, 'f', 6));
+	}else{
+        ui.gps_lat_2->setText("<font color='red'>---</font>");
+        ui.gps_lon_2->setText("<font color='red'>---</font>");
+        ui.gps_alt_2->setText("<font color='red'>---</font>");
+	}
+
+    if (signal.gpsLReceived){
+		ui.localx->setText(QString::number(gpsL_data.pose.pose.position.x, 'f', 6));
+		ui.localy->setText(QString::number(gpsL_data.pose.pose.position.y, 'f', 6));
+		ui.localz->setText(QString::number(gpsL_data.pose.pose.position.z, 'f', 6));
+        ui.localvx->setText(QString::number(gpsL_data.twist.twist.linear.x, 'f', 6));
+		ui.localvy->setText(QString::number(gpsL_data.twist.twist.linear.y, 'f', 6));
+		ui.localvz->setText(QString::number(gpsL_data.twist.twist.linear.z, 'f', 6));
+	}else{
+        ui.localx->setText("<font color='red'>---</font>");
+        ui.localy->setText("<font color='red'>---</font>");
+        ui.localz->setText("<font color='red'>---</font>");
+        ui.localvx->setText("<font color='red'>---</font>");
+        ui.localvy->setText("<font color='red'>---</font>");
+        ui.localvz->setText("<font color='red'>---</font>");
+        
+	}
+
+    if (signal.gpsHReceived){
+		ui.localx_2->setText(QString::number(gpsH_data.position.x, 'f', 6));
+		ui.localy_2->setText(QString::number(gpsH_data.position.y, 'f', 6));
+		ui.localz_2->setText(QString::number(gpsH_data.position.z, 'f', 6));
+	}else{
+        ui.localx_2->setText("<font color='red'>---</font>");
+        ui.localy_2->setText("<font color='red'>---</font>");
+        ui.localz_2->setText("<font color='red'>---</font>");
+	}
+
+    if (Planning_Enabled){
+        qnode.Do_Plan();
+		ui.Enable_Planning->setText("Disable Planning");
+    }else{
+		ui.Enable_Planning->setText("Enable_Planning");
+    }
+
+}
 
 
 ////////////////////////// Multi-uav button /////////////////////////
@@ -222,6 +335,10 @@ void MainWindow::on_Set_GPS_Origin_clicked(bool check){
         }
         for (const auto &i : avail_uavind){
             qnode.Set_GPS_Home_uavs(i, origin_ind);
+            UAVs[i].pos_ini[0] = UAVs[i].pos_cur[0];
+            UAVs[i].pos_ini[1] = UAVs[i].pos_cur[1];
+            UAVs[i].pos_ini[2] = UAVs[i].pos_cur[2];
+            qnode.Update_UAV_info(UAVs[i], i);
         }
     } else{
         ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to set GPS origin!");
@@ -404,10 +521,13 @@ void MainWindow::on_LAND_ONE_clicked(bool check){
 }
 
 void MainWindow::on_Button_Move_All_clicked(bool check){
+    for (const auto &i : avail_uavind){
+        qnode.move_uavs(i);
+    }
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Move all uavs command sent!");
+    int item_index = ui.notice_logger->count()-1;
+    ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }
-
-
-
 
 void MainWindow::on_ARM_ALL_clicked(bool check){
     for (const auto &i : avail_uavind){
@@ -491,8 +611,6 @@ void MainWindow::on_checkBox_clear_stateChanged(int){
 }
 
 
-
-
 ////////////////////////// Rostopic button /////////////////////////
 void MainWindow::on_Rostopic_Update_clicked(bool check){
     ui.rostopic_logger->clear();
@@ -504,121 +622,7 @@ void MainWindow::on_Rostopic_Update_clicked(bool check){
 }
 
 
-
-
 ////////////////////////// Update signals /////////////////////////
-void MainWindow::updateuav(){
-
-	mavros_msgs::State state_data = qnode.GetState();
-    Imu imu_data = qnode.GetImu();
-    sensor_msgs::BatteryState bat_data = qnode.GetBat();
-	mavros_msgs::Mavlink from_data = qnode.GetFrom();
-	outdoor_gcs::GPSRAW gps_data = qnode.GetGPS();
-	Gpsglobal gpsG_data = qnode.GetGPSG();
-	Gpslocal gpsL_data = qnode.GetGPSL();
-	GpsHomePos gpsH_data = qnode.GetGPSH();
-    outdoor_gcs::signalRec signal = qnode.Get_uav_signal();
-
-	if (signal.imuReceived){
-        ui.IMU_CONNECT->setText("<font color='green'>IMU CONNECTED</font>");
-        ui.CONNECT->setText("UAV CONNECTED: " + QString::number(from_data.sysid));
-        ui.Volt->setText(QString::number(bat_data.voltage, 'f', 2));
-        // Eigen::Quaterniond uav_quat = Eigen::Quaterniond(imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z);
-        // Eigen::Vector3d uav_euler = quaternion_to_euler(uav_quat); //Transform the Quaternion to euler Angles
-        float quat[4] = {imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z};
-        outdoor_gcs::Angles uav_euler = qnode.quaternion_to_euler(quat);
-        ui.roll->setText(QString::number(uav_euler.roll, 'f', 3));
-        ui.pitch->setText(QString::number(uav_euler.pitch, 'f', 3));
-        ui.yaw->setText(QString::number(uav_euler.yaw, 'f', 3));
-
-        if (state_data.connected){
-            ui.STATE_CONNECT->setText("<font color='green'>STATE CONNECTED</font>");
-        }
-        else{
-            ui.STATE_CONNECT->setText("<font color='red'>STATE UNCONNECTED</font>");
-        }
-        if (state_data.mode.empty()){
-            ui.MODE->setText("<font color='red'>---</font>");
-        }
-        else{
-		    ui.MODE->setText(QString::fromStdString(state_data.mode));
-        }
-		if (state_data.armed){
-			uav_ARMED = true;
-			ui.ARM->setText("DISARM");
-		}
-		else{
-			uav_ARMED = false;
-			ui.ARM->setText("ARM");
-		}
-	}else{
-        ui.CONNECT->setText("<font color='red'>UAV UNCONNECTED</font>");
-        ui.STATE_CONNECT->setText("<font color='red'>STATE UNCONNECTED</font>");
-        ui.IMU_CONNECT->setText("<font color='red'>IMU UNCONNECTED</font>");
-        ui.Volt->setText("<font color='red'>---</font>");
-        ui.MODE->setText("<font color='red'>---</font>");
-        ui.roll->setText("<font color='red'>---</font>");
-        ui.pitch->setText("<font color='red'>---</font>");
-        ui.yaw->setText("<font color='red'>---</font>");
-	}
-
-	if (signal.gpsReceived){
-        ui.gps_num->setText(QString::number(gps_data.satellites_visible));
-		ui.gps_lat->setText(QString::number(gps_data.lat*1e-7, 'f', 7));
-		ui.gps_lon->setText(QString::number(gps_data.lon*1e-7, 'f', 7));
-		ui.gps_alt->setText(QString::number(gps_data.alt*1e-3, 'f', 3));
-	}else{
-		ui.gps_num->setText("<font color='red'>---</font>");
-        ui.gps_lat->setText("<font color='red'>---</font>");
-        ui.gps_lon->setText("<font color='red'>---</font>");
-        ui.gps_alt->setText("<font color='red'>---</font>");
-	}
-
-    if (signal.gpsGReceived){
-		ui.gps_lat_2->setText(QString::number(gpsG_data.latitude, 'f', 6));
-		ui.gps_lon_2->setText(QString::number(gpsG_data.longitude, 'f', 6));
-		ui.gps_alt_2->setText(QString::number(gpsG_data.altitude, 'f', 6));
-	}else{
-        ui.gps_lat_2->setText("<font color='red'>---</font>");
-        ui.gps_lon_2->setText("<font color='red'>---</font>");
-        ui.gps_alt_2->setText("<font color='red'>---</font>");
-	}
-
-    if (signal.gpsLReceived){
-		ui.localx->setText(QString::number(gpsL_data.pose.pose.position.x, 'f', 6));
-		ui.localy->setText(QString::number(gpsL_data.pose.pose.position.y, 'f', 6));
-		ui.localz->setText(QString::number(gpsL_data.pose.pose.position.z, 'f', 6));
-        ui.localvx->setText(QString::number(gpsL_data.twist.twist.linear.x, 'f', 6));
-		ui.localvy->setText(QString::number(gpsL_data.twist.twist.linear.y, 'f', 6));
-		ui.localvz->setText(QString::number(gpsL_data.twist.twist.linear.z, 'f', 6));
-	}else{
-        ui.localx->setText("<font color='red'>---</font>");
-        ui.localy->setText("<font color='red'>---</font>");
-        ui.localz->setText("<font color='red'>---</font>");
-        ui.localvx->setText("<font color='red'>---</font>");
-        ui.localvy->setText("<font color='red'>---</font>");
-        ui.localvz->setText("<font color='red'>---</font>");
-        
-	}
-
-    if (signal.gpsHReceived){
-		ui.localx_2->setText(QString::number(gpsH_data.position.x, 'f', 6));
-		ui.localy_2->setText(QString::number(gpsH_data.position.y, 'f', 6));
-		ui.localz_2->setText(QString::number(gpsH_data.position.z, 'f', 6));
-	}else{
-        ui.localx_2->setText("<font color='red'>---</font>");
-        ui.localy_2->setText("<font color='red'>---</font>");
-        ui.localz_2->setText("<font color='red'>---</font>");
-	}
-
-    if (Planning_Enabled){
-        qnode.Do_Plan();
-		ui.Enable_Planning->setText("Disable Planning");
-    }else{
-		ui.Enable_Planning->setText("Enable_Planning");
-    }
-
-}
 void MainWindow::updateuavs(){
     if (avail_uavind.size()==0){
         ui.notice_logger->clear();
@@ -628,12 +632,13 @@ void MainWindow::updateuavs(){
     }
     ui.notice_logger->scrollToBottom();
 
-    for (const auto &it : avail_uavind){
-        UAVs[it] = qnode.Get_UAV_info(it);
+    for (const auto &i : avail_uavind){
+        UAVs[i] = qnode.Get_UAV_info(i);
+        if (ui.checkBox_Offboard -> isChecked()){
+	        qnode.Set_Mode_uavs("OFFBOARD", i);
+        }
     }
 }
-
-
 
 void MainWindow::updateInfoLogger(){
     if (checkbox_stat.clear_each_print){
@@ -719,7 +724,6 @@ void MainWindow::updateInfoLogger(){
                                      ". Y: " + QString::number(UAVs[it].pos_des[1], 'f', 3) + 
                                      ". Z: " + QString::number(UAVs[it].pos_des[2], 'f', 3));
         }
-
         ui.info_logger->addItem("----------------------------------------------------------------------------------------");
     }
 }

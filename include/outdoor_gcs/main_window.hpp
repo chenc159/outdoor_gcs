@@ -47,6 +47,7 @@ public Q_SLOTS:
 	/******************************************
 	** Auto-connections (connectSlotsByName())
 	*******************************************/
+	////////////////////// Single-uav ////////////////////////////
 	void on_ARM_clicked(bool check);
 	void on_SET_HOME_clicked(bool check);
 	void on_TAKEOFF_clicked(bool check);
@@ -62,7 +63,7 @@ public Q_SLOTS:
 	void on_Button_Set_H_clicked(bool check);
 	void on_Button_Get_clicked(bool check);
 
-
+	////////////////////// Multi-uav ////////////////////////////
 	void on_Update_UAV_List_clicked(bool check);
 	void on_Set_GPS_Origin_clicked(bool check);
 	void on_Button_Get_All_clicked(bool check);
@@ -99,12 +100,15 @@ public Q_SLOTS:
 private:
 	Ui::MainWindowDesign ui;
 	QNode qnode;
+	////////////////////// Single-uav ////////////////////////////
 	bool uav_ARMED;
 	bool Planning_Enabled = false;
 
+	////////////////////// Multi-uav ////////////////////////////
 	int DroneNumber = 10;
 	std::list<int> avail_uavind;
 	int origin_ind;
+	// bool continue_offboard;
 	outdoor_gcs::uav_info UAVs[10];
 	QStringList UAV_Detected;
 	QStringList UAV_Info_Logger;
