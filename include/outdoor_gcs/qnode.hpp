@@ -28,6 +28,7 @@
 #endif
 
 #include <string>
+// #include <unistd.h>
 // #include <Eigen/Eigen>
 #include <QThread>
 #include <QStringListModel>
@@ -183,6 +184,8 @@ private:
 	int init_argc;
 	char** init_argv;
 
+	ros::Time last_request;
+
 	////////////////////// Single uav ////////////////////////////
 	mavros_msgs::State uav_state;
 	Imu uav_imu;
@@ -230,18 +233,31 @@ private:
 	outdoor_gcs::uav_info UAVs_info[10];
 	std::list<int> avail_uavind;
 
-	std::vector<ros::Subscriber> uavs_state_sub;
-	std::vector<ros::Subscriber> uavs_imu_sub;
-	std::vector<ros::Subscriber> uavs_gps_sub;
-	std::vector<ros::Subscriber> uavs_gpsL_sub;
-	std::vector<ros::Subscriber> uavs_from_sub;
+	// std::vector<ros::Subscriber> uavs_state_sub;
+	// std::vector<ros::Subscriber> uavs_imu_sub;
+	// std::vector<ros::Subscriber> uavs_gps_sub;
+	// std::vector<ros::Subscriber> uavs_gpsL_sub;
+	// std::vector<ros::Subscriber> uavs_from_sub;
 
-	std::vector<ros::Publisher> uavs_setpoint_pub;
-	std::vector<ros::Publisher> uavs_setpoint_alt_pub;	
-	std::vector<ros::Publisher> uavs_gps_home_pub;
+	// std::vector<ros::Publisher> uavs_setpoint_pub;
+	// std::vector<ros::Publisher> uavs_setpoint_alt_pub;	
+	// std::vector<ros::Publisher> uavs_gps_home_pub;
 
-	std::vector<ros::ServiceClient> uavs_arming_client;
-	std::vector<ros::ServiceClient> uavs_setmode_client;
+	// std::vector<ros::ServiceClient> uavs_arming_client;
+	// std::vector<ros::ServiceClient> uavs_setmode_client;
+
+	ros::Subscriber uavs_state_sub[10];
+	ros::Subscriber uavs_imu_sub[10];
+	ros::Subscriber uavs_gps_sub[10];
+	ros::Subscriber uavs_gpsL_sub[10];
+	ros::Subscriber uavs_from_sub[10];
+
+	ros::Publisher uavs_setpoint_pub[10];
+	ros::Publisher uavs_setpoint_alt_pub[10];	
+	ros::Publisher uavs_gps_home_pub[10];
+
+	ros::ServiceClient uavs_arming_client[10];
+	ros::ServiceClient uavs_setmode_client[10];
 
 	mavros_msgs::State uavs_state[10];
 	Imu uavs_imu[10];

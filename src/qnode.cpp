@@ -66,16 +66,6 @@ bool QNode::init() {
 	uav_setmode_client 	= n.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
 	uav_sethome_client 	= n.serviceClient<mavros_msgs::CommandHome>("/mavros/cmd/set_home");
 
-	uavs_state_sub.resize(DroneNumber);
-	uavs_imu_sub.resize(DroneNumber);
-	uavs_gps_sub.resize(DroneNumber);
-	uavs_gpsL_sub.resize(DroneNumber);
-	uavs_from_sub.resize(DroneNumber);
-	uavs_setpoint_pub.resize(DroneNumber);
-	uavs_setpoint_alt_pub.resize(DroneNumber);
-	uavs_gps_home_pub.resize(DroneNumber);
-	uavs_arming_client.resize(DroneNumber);
-	uavs_setmode_client.resize(DroneNumber);
 	for (int i = 0; i < DroneNumber ; i++) {
 		// std::cout << "/uav" + std::to_string(i+1) + "/mavros/imu/data" << std::endl;
 		// std::string name = "/uav" + std::to_string(i+1) + "/mavros/imu/data";
@@ -86,14 +76,14 @@ bool QNode::init() {
 		uavs_from_sub[i] 	= n.subscribe<mavros_msgs::Mavlink>("/uav" + std::to_string(i+1) + "/mavlink/from", 1, std::bind(&QNode::uavs_from_callback, this, std::placeholders::_1, i));
 	
 		uavs_setpoint_pub[i] = n.advertise<PosTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/local", 1);
-		uavs_setpoint_alt_pub[i] = n.advertise<PosTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/attitude", 1);
+		uavs_setpoint_alt_pub[i] = n.advertise<AltTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/attitude", 1);
 		uavs_gps_home_pub[i] = n.advertise<GpsHomePos>("/uav" + std::to_string(i+1) + "/mavros/global_position/home", 1);
 
 		uavs_arming_client[i] 	= n.serviceClient<mavros_msgs::CommandBool>("/uav" + std::to_string(i+1) +"/mavros/cmd/arming");
 		uavs_setmode_client[i] 	= n.serviceClient<mavros_msgs::SetMode>("/uav" + std::to_string(i+1) +"/mavros/set_mode");
 	
 	}
-
+	last_request = ros::Time::now();
 	start();
 	return true;
 }
@@ -339,7 +329,20 @@ void QNode::uavs_from_callback(const mavros_msgs::Mavlink::ConstPtr &msg, int in
 void QNode::Set_Arm_uavs(bool arm_disarm, int ind){
 	uavs_arm[ind].request.value = arm_disarm;
 	uavs_arming_client[ind].call(uavs_arm[ind]);
+	// usleep(3000000);
+	// if (uavs_arming_client[ind].call(uavs_arm[ind]) && uavs_arm[ind].response.success){
+	// 	// std::cout << "success" << std::endl;
+	// 	// std::cout << uavs_arm[ind].response.success << std::endl;
+	// }
+	// while(ros::Time::now() - last_request < ros::Duration(3.0)){sleep(100.0);}
+	// last_request = ros::Time::now();
+	// if (!uavs_arm[ind].response.success){
+	// 	std::cout << ind << std::endl;
+	// 	std::cout << "success2" << std::endl;
+	// 	std::cout << uavs_arm[ind].response.success << std::endl;
+	// }
 }
+
 void QNode::Set_Mode_uavs(std::string command_mode, int ind){
 	uavs_setmode[ind].request.custom_mode = command_mode;
 	uavs_setmode_client[ind].call(uavs_setmode[ind]);
