@@ -95,6 +95,7 @@ void QNode::run() {
 	while ( ros::ok() ) {
 
 		pub_command();
+		uavs_call_service(); // for multi-uav
 		ros::spinOnce();
 
 		uav_received.stateReceived = false;
@@ -127,6 +128,8 @@ void QNode::run() {
 		uav_received.pregpsG = false;
 		uav_received.pregpsL = false;
 		uav_received.pregpsH = false;
+
+		//////////////// Multi-uav /////////////////
 
 
     	for (const auto &i : avail_uavind){
@@ -299,6 +302,35 @@ outdoor_gcs::signalRec QNode::Get_uav_signal(){
 
 ////////////////////////////////////////////// Multi-uav ///////////////////////////////////////////////////
 
+void QNode::uavs_call_service(){
+	for (const auto &ind : avail_uavind){
+		if (service_flag[ind] == 1){ // arm or disarm
+			if(uavs_arming_client[ind].call(uavs_arm[ind]) && uavs_arm[ind].response.success){
+				service_flag[ind] = 0;
+				// break;
+			}
+		}
+		else if (service_flag[ind] == 2){ // set mode (AUTO.TAKEOFF, AUTO.LAUBD, OFFBOARD ... etc)
+			uavs_setmode_client[ind].call(uavs_setmode[ind]);
+			service_flag[ind] = 0;
+			// break;
+		}
+	}
+}
+
+void QNode::uavs_pub_command(){
+	for (const auto &ind : avail_uavind){
+		if (publish_flag[ind] == 1){ // gps set origin
+			uavs_gps_home_pub[ind].publish(uavs_gps_home[ind]);
+			publish_flag[ind] = 0;
+		}
+		else if (publish_flag[ind] == 2){ // setpoint/local
+			uavs_setpoint_pub[ind].publish(uavs_setpoint[ind]);
+			publish_flag[ind] = 0;
+		}
+	}
+}
+
 void QNode::uavs_state_callback(const mavros_msgs::State::ConstPtr &msg, int ind){
 	uavs_state[ind] = *msg;
 	UAVs_info[ind].prestateReceived = true;
@@ -328,29 +360,17 @@ void QNode::uavs_from_callback(const mavros_msgs::Mavlink::ConstPtr &msg, int in
 
 void QNode::Set_Arm_uavs(bool arm_disarm, int ind){
 	uavs_arm[ind].request.value = arm_disarm;
-	uavs_arming_client[ind].call(uavs_arm[ind]);
-	// usleep(3000000);
-	// if (uavs_arming_client[ind].call(uavs_arm[ind]) && uavs_arm[ind].response.success){
-	// 	// std::cout << "success" << std::endl;
-	// 	// std::cout << uavs_arm[ind].response.success << std::endl;
-	// }
-	// while(ros::Time::now() - last_request < ros::Duration(3.0)){sleep(100.0);}
-	// last_request = ros::Time::now();
-	// if (!uavs_arm[ind].response.success){
-	// 	std::cout << ind << std::endl;
-	// 	std::cout << "success2" << std::endl;
-	// 	std::cout << uavs_arm[ind].response.success << std::endl;
-	// }
+	service_flag[ind] = 1;
 }
 
 void QNode::Set_Mode_uavs(std::string command_mode, int ind){
 	uavs_setmode[ind].request.custom_mode = command_mode;
-	uavs_setmode_client[ind].call(uavs_setmode[ind]);
+	service_flag[ind] = 2;
 }
 void QNode::Set_GPS_Home_uavs(int host_ind, int origin_ind){
 	uavs_gps_home[host_ind].geo.latitude  = uavs_gps[origin_ind].lat*1e-7;
 	uavs_gps_home[host_ind].geo.longitude = uavs_gps[origin_ind].lon*1e-7;
-	uavs_gps_home_pub[host_ind].publish(uavs_gps_home[host_ind]);
+	publish_flag[host_ind] = 1;
 }
 
 void QNode::move_uavs(int ind){
@@ -361,8 +381,8 @@ void QNode::move_uavs(int ind){
 	uavs_setpoint[ind].position.y = UAVs_info[ind].pos_des[1] - UAVs_info[ind].pos_ini[1];
 	uavs_setpoint[ind].position.z = UAVs_info[ind].pos_des[2] - UAVs_info[ind].pos_ini[2];
 	uavs_setpoint[ind].yaw = 0.0;
-	uavs_setpoint_pub[ind].publish(uavs_setpoint[ind]);
-	Set_Mode_uavs("OFFBOARD", ind);
+	publish_flag[ind] = 2;
+	// Set_Mode_uavs("OFFBOARD", ind);
 }
 
 // void QNode::Move_uavs_alt(int ind){

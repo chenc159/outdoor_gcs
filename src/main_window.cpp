@@ -534,14 +534,14 @@ void MainWindow::on_Button_Move_One_clicked(bool check){
         for (const auto &i : avail_uavind){
             if (selected_uav[0]->text() == "uav" + QString::number(i+1)){
         	    qnode.move_uavs(i);
-                ui.notice_logger->addItem(QTime::currentTime().toString() + " : Command for uav " + QString::number(i+1) + " to Move is sent!");
+                ui.notice_logger->addItem(QTime::currentTime().toString() + " : Command for uav " + QString::number(i+1) + " to MOVE is sent!");
                 int item_index = ui.notice_logger->count()-1;
                 ui.notice_logger->item(item_index)->setForeground(Qt::blue);
                 break;
             }
         }
     } else{
-        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to land!");
+        ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to move!");
         int item_index = ui.notice_logger->count()-1;
         ui.notice_logger->item(item_index)->setForeground(Qt::red);
     }
@@ -552,7 +552,7 @@ void MainWindow::on_ARM_ALL_clicked(bool check){
         qnode.Set_Arm_uavs(true, i);
         // sleep(1.0);
     }
-    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Arm all uavs command sent!");
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : ARM ALL uavs command sent!");
     int item_index = ui.notice_logger->count()-1;
     ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }
@@ -560,7 +560,7 @@ void MainWindow::on_DISARM_ALL_clicked(bool check){
     for (const auto &i : avail_uavind){
         qnode.Set_Arm_uavs(false, i);
     }
-    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Disarm all uavs command sent!");
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : DISARM ALL uavs command sent!");
     int item_index = ui.notice_logger->count()-1;
     ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }
@@ -568,7 +568,7 @@ void MainWindow::on_TAKEOFF_ALL_clicked(bool check){
     for (const auto &i : avail_uavind){
 	    qnode.Set_Mode_uavs("AUTO.TAKEOFF", i);
     }
-    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Takeoff all uavs command sent!");
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : TAKEOFF ALL uavs command sent!");
     int item_index = ui.notice_logger->count()-1;
     ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }
@@ -576,7 +576,7 @@ void MainWindow::on_LAND_ALL_clicked(bool check){
     for (const auto &i : avail_uavind){
 	    qnode.Set_Mode_uavs("AUTO.LAND", i);
     }
-    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Land all uavs command sent!");
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : LAND ALL uavs command sent!");
     int item_index = ui.notice_logger->count()-1;
     ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }
@@ -585,7 +585,7 @@ void MainWindow::on_Button_Move_All_clicked(bool check){
     for (const auto &i : avail_uavind){
         qnode.move_uavs(i);
     }
-    ui.notice_logger->addItem(QTime::currentTime().toString() + " : Move all uavs command sent!");
+    ui.notice_logger->addItem(QTime::currentTime().toString() + " : MOVE ALL uavs command sent!");
     int item_index = ui.notice_logger->count()-1;
     ui.notice_logger->item(item_index)->setForeground(Qt::blue);
 }

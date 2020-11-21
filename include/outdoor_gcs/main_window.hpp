@@ -107,11 +107,11 @@ private:
 	bool Planning_Enabled = false;
 
 	////////////////////// Multi-uav ////////////////////////////
-	int DroneNumber = 10;
+	int DroneNumber = 5;
 	std::list<int> avail_uavind;
 	int origin_ind;
 	// bool continue_offboard;
-	outdoor_gcs::uav_info UAVs[10];
+	outdoor_gcs::uav_info UAVs[5];
 	QStringList UAV_Detected;
 	QStringList UAV_Info_Logger;
 	outdoor_gcs::checkbox_status checkbox_stat;

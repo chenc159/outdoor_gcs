@@ -158,6 +158,8 @@ public:
 	outdoor_gcs::signalRec Get_uav_signal();
 
 	////////////////////// Multi-uav ////////////////////////////
+	void uavs_call_service();
+	void uavs_pub_command();
 	void Set_Arm_uavs(bool arm_disarm, int ind);
 	void Set_Mode_uavs(std::string command_mode, int ind);
 	void Set_GPS_Home_uavs(int host_ind, int origin_ind);
@@ -229,9 +231,11 @@ private:
 	void from_callback(const mavros_msgs::Mavlink::ConstPtr &msg);
 
 	////////////////////// Multi-uav ////////////////////////////
-	int DroneNumber = 10;
-	outdoor_gcs::uav_info UAVs_info[10];
+	int DroneNumber = 5;
+	outdoor_gcs::uav_info UAVs_info[5];
 	std::list<int> avail_uavind;
+	int service_flag[5];
+	int publish_flag[5];
 
 	// std::vector<ros::Subscriber> uavs_state_sub;
 	// std::vector<ros::Subscriber> uavs_imu_sub;
@@ -246,29 +250,29 @@ private:
 	// std::vector<ros::ServiceClient> uavs_arming_client;
 	// std::vector<ros::ServiceClient> uavs_setmode_client;
 
-	ros::Subscriber uavs_state_sub[10];
-	ros::Subscriber uavs_imu_sub[10];
-	ros::Subscriber uavs_gps_sub[10];
-	ros::Subscriber uavs_gpsL_sub[10];
-	ros::Subscriber uavs_from_sub[10];
+	ros::Subscriber uavs_state_sub[5];
+	ros::Subscriber uavs_imu_sub[5];
+	ros::Subscriber uavs_gps_sub[5];
+	ros::Subscriber uavs_gpsL_sub[5];
+	ros::Subscriber uavs_from_sub[5];
 
-	ros::Publisher uavs_setpoint_pub[10];
-	ros::Publisher uavs_setpoint_alt_pub[10];	
-	ros::Publisher uavs_gps_home_pub[10];
+	ros::Publisher uavs_setpoint_pub[5];
+	ros::Publisher uavs_setpoint_alt_pub[5];	
+	ros::Publisher uavs_gps_home_pub[5];
 
-	ros::ServiceClient uavs_arming_client[10];
-	ros::ServiceClient uavs_setmode_client[10];
+	ros::ServiceClient uavs_arming_client[5];
+	ros::ServiceClient uavs_setmode_client[5];
 
-	mavros_msgs::State uavs_state[10];
-	Imu uavs_imu[10];
-	Gpsraw uavs_gps[10];
-	Gpslocal uavs_gpsL[10];
-	mavros_msgs::Mavlink uavs_from[10];
-	mavros_msgs::CommandBool uavs_arm[10];
-	mavros_msgs::SetMode uavs_setmode[10];
-	PosTarg uavs_setpoint[10];
-	AltTarg uavs_setpoint_alt[10];
-	GpsHomePos uavs_gps_home[10]; //origin of gps local
+	mavros_msgs::State uavs_state[5];
+	Imu uavs_imu[5];
+	Gpsraw uavs_gps[5];
+	Gpslocal uavs_gpsL[5];
+	mavros_msgs::Mavlink uavs_from[5];
+	mavros_msgs::CommandBool uavs_arm[5];
+	mavros_msgs::SetMode uavs_setmode[5];
+	PosTarg uavs_setpoint[5];
+	AltTarg uavs_setpoint_alt[5];
+	GpsHomePos uavs_gps_home[5]; //origin of gps local
 	
 	void uavs_state_callback(const mavros_msgs::State::ConstPtr &msg, int ind);
 	void uavs_imu_callback(const sensor_msgs::Imu::ConstPtr &msg, int ind);
