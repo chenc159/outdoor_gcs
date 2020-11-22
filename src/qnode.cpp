@@ -49,9 +49,6 @@ bool QNode::init() {
 	ros::NodeHandle n;
 	
 	uav_state_sub 	= n.subscribe<mavros_msgs::State>("/mavros/state", 10, &QNode::state_callback, this);
-	// uav_imu_sub 	= n.subscribe<Imu>("/mavros/imu/data", 1, &QNode::imu_callback, this);
-	// std::string name = "/uav" + std::to_string(1) + "/mavros/imu/data";
-	// uav_imu_sub 	= n.subscribe<Imu>(name, 1, std::bind(&QNode::uavs_imu_callback, this, std::placeholders::_1, 0));
 	uav_gps_sub 	= n.subscribe<Gpsraw>("/mavros/gpsstatus/gps1/raw", 1, &QNode::gps_callback, this);
 	uav_gpsG_sub 	= n.subscribe<Gpsglobal>("/mavros/global_position/global", 1, &QNode::gpsG_callback, this);
 	uav_gpsL_sub 	= n.subscribe<Gpslocal>("/mavros/global_position/local", 1, &QNode::gpsL_callback, this);
@@ -72,6 +69,7 @@ bool QNode::init() {
 		uavs_state_sub[i]	= n.subscribe<mavros_msgs::State>("/uav" + std::to_string(i+1) + "/mavros/state", 1, std::bind(&QNode::uavs_state_callback, this, std::placeholders::_1, i));
 		uavs_imu_sub[i] 	= n.subscribe<Imu>("/uav" + std::to_string(i+1) + "/mavros/imu/data", 1, std::bind(&QNode::uavs_imu_callback, this, std::placeholders::_1, i));
 		uavs_gps_sub[i] 	= n.subscribe<Gpsraw>("/uav" + std::to_string(i+1) + "/mavros/gpsstatus/gps1/raw", 1, std::bind(&QNode::uavs_gps_callback, this, std::placeholders::_1, i));
+		uavs_gpsG_sub[i] 	= n.subscribe<Gpsglobal>("/uav" + std::to_string(i+1) + "/mavros/global_position/global", 1, std::bind(&QNode::uavs_gpsG_callback, this, std::placeholders::_1, i));
 		uavs_gpsL_sub[i] 	= n.subscribe<Gpslocal>("/uav" + std::to_string(i+1) + "/mavros/global_position/local", 1, std::bind(&QNode::uavs_gpsL_callback, this, std::placeholders::_1, i));
 		uavs_from_sub[i] 	= n.subscribe<mavros_msgs::Mavlink>("/uav" + std::to_string(i+1) + "/mavlink/from", 1, std::bind(&QNode::uavs_from_callback, this, std::placeholders::_1, i));
 	
@@ -96,6 +94,7 @@ void QNode::run() {
 
 		pub_command();
 		uavs_call_service(); // for multi-uav
+		uavs_pub_command(); // for multi-uav
 		ros::spinOnce();
 
 		uav_received.stateReceived = false;
@@ -130,7 +129,6 @@ void QNode::run() {
 		uav_received.pregpsH = false;
 
 		//////////////// Multi-uav /////////////////
-
 
     	for (const auto &i : avail_uavind){
 			UAVs_info[i].stateReceived = false;
@@ -305,10 +303,11 @@ outdoor_gcs::signalRec QNode::Get_uav_signal(){
 void QNode::uavs_call_service(){
 	for (const auto &ind : avail_uavind){
 		if (service_flag[ind] == 1){ // arm or disarm
-			if(uavs_arming_client[ind].call(uavs_arm[ind]) && uavs_arm[ind].response.success){
-				service_flag[ind] = 0;
+			uavs_arming_client[ind].call(uavs_arm[ind]);
+			service_flag[ind] = 0;
+			// if(uavs_arming_client[ind].call(uavs_arm[ind]) && uavs_arm[ind].response.success){
 				// break;
-			}
+			// }
 		}
 		else if (service_flag[ind] == 2){ // set mode (AUTO.TAKEOFF, AUTO.LAUBD, OFFBOARD ... etc)
 			uavs_setmode_client[ind].call(uavs_setmode[ind]);
@@ -343,6 +342,9 @@ void QNode::uavs_gps_callback(const outdoor_gcs::GPSRAW::ConstPtr &msg, int ind)
 	uavs_gps[ind] = *msg;
 	UAVs_info[ind].pregpsReceived = true;
 }
+void QNode::uavs_gpsG_callback(const Gpsglobal::ConstPtr &msg, int ind){
+	uavs_gpsG[ind] = *msg;
+}
 void QNode::uavs_gpsL_callback(const Gpslocal::ConstPtr &msg, int ind){
 	uavs_gpsL[ind] = *msg;
 	UAVs_info[ind].pregpsLReceived = true;
@@ -368,8 +370,8 @@ void QNode::Set_Mode_uavs(std::string command_mode, int ind){
 	service_flag[ind] = 2;
 }
 void QNode::Set_GPS_Home_uavs(int host_ind, int origin_ind){
-	uavs_gps_home[host_ind].geo.latitude  = uavs_gps[origin_ind].lat*1e-7;
-	uavs_gps_home[host_ind].geo.longitude = uavs_gps[origin_ind].lon*1e-7;
+	uavs_gps_home[host_ind].geo.latitude  = uavs_gpsG[origin_ind].latitude;
+	uavs_gps_home[host_ind].geo.longitude = uavs_gpsG[origin_ind].longitude;
 	publish_flag[host_ind] = 1;
 }
 
@@ -393,9 +395,6 @@ void QNode::move_uavs(int ind){
 // 	uavs_setpoint_alt[ind].thrust = 
 // }
 
-// void QNode::pos_controller_cascade_pid_pos_controller(int ind){
-
-// }
 
 void QNode::Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind){
 	UAVs_info[ind] = UAV_input;

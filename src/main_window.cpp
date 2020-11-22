@@ -672,6 +672,11 @@ void MainWindow::updateInfoLogger(){
     if (checkbox_stat.clear_each_print){
         ui.info_logger->clear();
     }
+    ui.info_logger->addItem(QTime::currentTime().toString());
+    int item_index = ui.info_logger->count()-1;
+    ui.info_logger->item(item_index)->setForeground(Qt::white);
+    ui.info_logger->item(item_index)->setBackground(Qt::black);
+
     for (const auto &it : avail_uavind){
 
         if (checkbox_stat.print_imu || checkbox_stat.print_state || checkbox_stat.print_gps ||
@@ -683,14 +688,12 @@ void MainWindow::updateInfoLogger(){
 
         if (checkbox_stat.print_imu){
             Imu imu_data = qnode.GetImu_uavs(it);
-            if (UAVs[it].imuReceived){
-                float quat[4] = {imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z};
-                outdoor_gcs::Angles uav_euler = qnode.quaternion_to_euler(quat);
-                ui.info_logger->addItem("Roll: " + QString::number(uav_euler.roll, 'f', 3) + ". Pitch: " + 
-                                QString::number(uav_euler.pitch, 'f', 3) + ". Yaw: " + QString::number(uav_euler.yaw, 'f', 3));
-            }else{
-                ui.info_logger->addItem("Imu empty");
-                int item_index = ui.info_logger->count()-1;
+            float quat[4] = {imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z};
+            outdoor_gcs::Angles uav_euler = qnode.quaternion_to_euler(quat);
+            ui.info_logger->addItem("Roll: " + QString::number(uav_euler.roll, 'f', 3) + ". Pitch: " + 
+                            QString::number(uav_euler.pitch, 'f', 3) + ". Yaw: " + QString::number(uav_euler.yaw, 'f', 3));
+            int item_index = ui.info_logger->count()-1;
+            if (!UAVs[it].imuReceived){
                 ui.info_logger->item(item_index)->setForeground(Qt::red);
             }
         }
@@ -713,38 +716,32 @@ void MainWindow::updateInfoLogger(){
                 state_to_be_print += "DISARMED!";
             }
             ui.info_logger->addItem(state_to_be_print);
+            int item_index = ui.info_logger->count()-1;
+            if (!state_data.connected){
+                ui.info_logger->item(item_index)->setForeground(Qt::red);
+            }
         }
         if (checkbox_stat.print_gps){
 	        outdoor_gcs::GPSRAW gps_data = qnode.GetGPS_uavs(it);
-            if (UAVs[it].gpsReceived){
-                ui.info_logger->addItem("Num: " + QString::number(gps_data.satellites_visible) + ". Lat: " + QString::number(gps_data.lat*1e-7, 'f', 7)
-                                         + ". Lon: " + QString::number(gps_data.lon*1e-7, 'f', 7) + ". Alt: " + QString::number(gps_data.alt*1e-3, 'f', 3));
-            }else{
-                ui.info_logger->addItem("GPS empty");
-                int item_index = ui.info_logger->count()-1;
+            ui.info_logger->addItem("Num: " + QString::number(gps_data.satellites_visible) + ". Lat: " + QString::number(gps_data.lat*1e-7, 'f', 7) +
+                                    ". Lon: " + QString::number(gps_data.lon*1e-7, 'f', 7) + ". Alt: " + QString::number(gps_data.alt*1e-3, 'f', 3));
+            int item_index = ui.info_logger->count()-1;
+            if (!UAVs[it].gpsReceived){
                 ui.info_logger->item(item_index)->setForeground(Qt::red);
             }
         }
         if (checkbox_stat.print_local){
-            // Gpslocal gpsL_data = qnode.GetGPSL_uavs(it);
-            if (UAVs[it].gpsLReceived){
-                // ui.info_logger->addItem("Local Position: X: " + QString::number(gpsL_data.pose.pose.position.x, 'f', 3) +
-                //                         ". Y: " + QString::number(gpsL_data.pose.pose.position.y, 'f', 3) +
-                //                         ". Z: " + QString::number(gpsL_data.pose.pose.position.z, 'f', 3));
-                // ui.info_logger->addItem("Local Velocity: X: " + QString::number(gpsL_data.twist.twist.linear.x, 'f', 3) +
-                //                         ". Y: " + QString::number(gpsL_data.twist.twist.linear.y, 'f', 3) +
-                //                         ". Z: " + QString::number(gpsL_data.twist.twist.linear.z, 'f', 3));
-                ui.info_logger->addItem("Local Position: X: " + QString::number(UAVs[it].pos_cur[0], 'f', 3) +
-                                        ". Y: " + QString::number(UAVs[it].pos_cur[1], 'f', 3) +
-                                        ". Z: " + QString::number(UAVs[it].pos_cur[2], 'f', 3));
-                ui.info_logger->addItem("Local Velocity: X: " + QString::number(UAVs[it].vel_cur[0], 'f', 3) +
-                                        ". Y: " + QString::number(UAVs[it].vel_cur[1], 'f', 3) +
-                                        ". Z: " + QString::number(UAVs[it].vel_cur[2], 'f', 3));
-
-            }else{
-                ui.info_logger->addItem("Local empty");
-                int item_index = ui.info_logger->count()-1;
+            ui.info_logger->addItem("Local Position: X: " + QString::number(UAVs[it].pos_cur[0], 'f', 3) +
+                                    ". Y: " + QString::number(UAVs[it].pos_cur[1], 'f', 3) +
+                                    ". Z: " + QString::number(UAVs[it].pos_cur[2], 'f', 3));
+            ui.info_logger->addItem("Local Velocity: X: " + QString::number(UAVs[it].vel_cur[0], 'f', 3) +
+                                    ". Y: " + QString::number(UAVs[it].vel_cur[1], 'f', 3) +
+                                    ". Z: " + QString::number(UAVs[it].vel_cur[2], 'f', 3));
+            int item_index = ui.info_logger->count()-1;
+            int item_index2 = ui.info_logger->count()-2;
+            if (!UAVs[it].gpsLReceived){
                 ui.info_logger->item(item_index)->setForeground(Qt::red);
+                ui.info_logger->item(item_index2)->setForeground(Qt::red);
             }
         }
         if (checkbox_stat.print_des){

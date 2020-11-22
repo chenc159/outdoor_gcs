@@ -1208,6 +1208,9 @@
          <property name="text">
           <string>Imu</string>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
         <widget class="QCheckBox" name="checkBox_mode">
          <property name="geometry">
@@ -1220,6 +1223,9 @@
          </property>
          <property name="text">
           <string>Mode</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
         <widget class="QCheckBox" name="checkBox_local">
@@ -1234,6 +1240,9 @@
          <property name="text">
           <string>Local</string>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
         <widget class="QCheckBox" name="checkBox_gps">
          <property name="geometry">
@@ -1246,6 +1255,9 @@
          </property>
          <property name="text">
           <string>GPS</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
         <widget class="QCheckBox" name="checkBox_des">
@@ -1260,6 +1272,9 @@
          <property name="text">
           <string>Des</string>
          </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
         <widget class="QCheckBox" name="checkBox_clear">
          <property name="geometry">
@@ -1272,6 +1287,9 @@
          </property>
          <property name="text">
           <string>Clear</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
         </widget>
        </widget>

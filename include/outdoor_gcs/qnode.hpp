@@ -115,12 +115,12 @@ namespace outdoor_gcs {
 
 	struct checkbox_status
 	{
-		bool print_imu = false;
-		bool print_state = false;
-		bool print_gps = false;
-		bool print_local = false;
-		bool print_des = false;
-		bool clear_each_print = false;
+		bool print_imu = true;
+		bool print_state = true;
+		bool print_gps = true;
+		bool print_local = true;
+		bool print_des = true;
+		bool clear_each_print = true;
 	};
 	
 	
@@ -253,6 +253,7 @@ private:
 	ros::Subscriber uavs_state_sub[5];
 	ros::Subscriber uavs_imu_sub[5];
 	ros::Subscriber uavs_gps_sub[5];
+	ros::Subscriber uavs_gpsG_sub[5];
 	ros::Subscriber uavs_gpsL_sub[5];
 	ros::Subscriber uavs_from_sub[5];
 
@@ -266,6 +267,7 @@ private:
 	mavros_msgs::State uavs_state[5];
 	Imu uavs_imu[5];
 	Gpsraw uavs_gps[5];
+	Gpsglobal uavs_gpsG[5];
 	Gpslocal uavs_gpsL[5];
 	mavros_msgs::Mavlink uavs_from[5];
 	mavros_msgs::CommandBool uavs_arm[5];
@@ -277,6 +279,7 @@ private:
 	void uavs_state_callback(const mavros_msgs::State::ConstPtr &msg, int ind);
 	void uavs_imu_callback(const sensor_msgs::Imu::ConstPtr &msg, int ind);
 	void uavs_gps_callback(const outdoor_gcs::GPSRAW::ConstPtr &msg, int ind);
+	void uavs_gpsG_callback(const Gpsglobal::ConstPtr &msg, int ind);
 	void uavs_gpsL_callback(const Gpslocal::ConstPtr &msg, int ind);
 	void uavs_from_callback(const mavros_msgs::Mavlink::ConstPtr &msg, int ind);
 
