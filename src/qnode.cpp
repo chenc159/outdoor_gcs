@@ -81,18 +81,18 @@ bool QNode::init() {
 		uavs_setmode_client[i] 	= n.serviceClient<mavros_msgs::SetMode>("/uav" + std::to_string(i+1) +"/mavros/set_mode");
 	
 	}
-	last_request = ros::Time::now();
+
 	start();
 	return true;
 }
 
 void QNode::run() {
 	ros::Rate loop_rate(1);
-	int count = 0;
 
 	while ( ros::ok() ) {
 
 		pub_command();
+		UAVS_Do_Plan(); // for multi-uav
 		uavs_call_service(); // for multi-uav
 		uavs_pub_command(); // for multi-uav
 		ros::spinOnce();
@@ -153,11 +153,9 @@ void QNode::run() {
 			UAVs_info[i].pregpsLReceived = false;
 		}
 
-
 		/* signal a ros loop update  */
 		Q_EMIT rosLoopUpdate();
 		loop_rate.sleep();
-		// ++count;
 	}
 	std::cout << "Ros shutdown, proceeding to close the gui." << std::endl;
 	Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
@@ -247,26 +245,6 @@ void QNode::move_uav_height(float height){
     uav_setpoint.type_mask = 0b110111111011;
     uav_setpoint.coordinate_frame = 1;
 	uav_setpoint.position.z = height;
-}
-
-void QNode::Do_Plan(){
-	// for cf_id in self.cf_ids:
-	// 	other_cfs = self.cf_ids[:]
-	// 	other_cfs.remove(cf_id)
-	// 	self._dist_to_goal[str(cf_id)] = np.linalg.norm(self._pos[str(cf_id)] - self.finals[str(cf_id)])
-	// 	force = -self.c1*self._vel[str(cf_id)] - self.c2*(self._pos[str(cf_id)] - self.finals[str(cf_id)])
-	// 	for other_cf in other_cfs:
-	// 		dist_v = self._pos[str(other_cf)] - self._pos[str(cf_id)]
-	// 		dist = np.linalg.norm(dist_v)
-	// 		d = 2*self.radius + self.d_star
-	// 		CommunicationRadious = np.cbrt(3*np.square(self.MaxVelo)/(2*self.RepulsiveGradient)) + d
-	// 		if dist < CommunicationRadious:
-	// 			ForceComponent = -self.RepulsiveGradient * np.square(dist - CommunicationRadious)
-	// 			force += ForceComponent * (dist_v)/dist
-	// 		velocity_d = self._vel[str(cf_id)] + force * self.dt
-	// 		position_d = self._pos[str(cf_id)] + velocity_d*self.dt
-	// 		position_d[2] = 1.0
-	// 		self.update_pos(str(cf_id), position_d)
 }
 
 State QNode::GetState(){
@@ -375,13 +353,13 @@ void QNode::Set_GPS_Home_uavs(int host_ind, int origin_ind){
 	publish_flag[host_ind] = 1;
 }
 
-void QNode::move_uavs(int ind){
+void QNode::move_uavs(int ind, float pos_input[3]){
 	uavs_setpoint[ind].header.stamp = ros::Time::now();
     uavs_setpoint[ind].type_mask = 0b100111111000;  // 100 111 111 000  xyz + yaw
     uavs_setpoint[ind].coordinate_frame = 1;
-	uavs_setpoint[ind].position.x = UAVs_info[ind].pos_des[0] - UAVs_info[ind].pos_ini[0];
-	uavs_setpoint[ind].position.y = UAVs_info[ind].pos_des[1] - UAVs_info[ind].pos_ini[1];
-	uavs_setpoint[ind].position.z = UAVs_info[ind].pos_des[2] - UAVs_info[ind].pos_ini[2];
+	uavs_setpoint[ind].position.x = pos_input[0];
+	uavs_setpoint[ind].position.y = pos_input[1];
+	uavs_setpoint[ind].position.z = pos_input[2];
 	uavs_setpoint[ind].yaw = 0.0;
 	publish_flag[ind] = 2;
 	// Set_Mode_uavs("OFFBOARD", ind);
@@ -395,12 +373,92 @@ void QNode::move_uavs(int ind){
 // 	uavs_setpoint_alt[ind].thrust = 
 // }
 
+void QNode::UAVS_Do_Plan(){
+	for (const auto &host_ind : avail_uavind){
+		if (!Move[host_ind]){ continue; }
+		else{
+			if (Plan_Dim == 0){
+				float pos_input[3];
+				pos_input[0] = UAVs_info[host_ind].pos_des[0] - UAVs_info[host_ind].pos_ini[0];
+				pos_input[1] = UAVs_info[host_ind].pos_des[1] - UAVs_info[host_ind].pos_ini[1];
+				pos_input[2] = UAVs_info[host_ind].pos_des[2] - UAVs_info[host_ind].pos_ini[2];
+				move_uavs(host_ind, pos_input);
+			}
+			else if (Plan_Dim == 2){
+				float force[2];
+				force[0] = -c1*(UAVs_info[host_ind].vel_cur[0])-c2*(UAVs_info[host_ind].pos_cur[0]-UAVs_info[host_ind].pos_des[0]);
+				force[1] = -c1*(UAVs_info[host_ind].vel_cur[1])-c2*(UAVs_info[host_ind].pos_cur[1]-UAVs_info[host_ind].pos_des[1]);
+				for (const auto &other_ind : avail_uavind){
+					float dist_v[2] = {	UAVs_info[host_ind].pos_cur[0]-UAVs_info[other_ind].pos_cur[0],
+										UAVs_info[host_ind].pos_cur[1]-UAVs_info[other_ind].pos_cur[1]};
+					float dist = std::pow(std::pow(dist_v[0],2) + std::pow(dist_v[1], 2), 0.5);
+					if (host_ind != other_ind && dist < r_alpha){
+						float ForceComponent = -RepulsiveGradient*std::pow(dist - r_alpha, 2);
+						force[0] += ForceComponent*(dist_v[0]/dist);
+						force[1] += ForceComponent*(dist_v[1]/dist);
+					}
+				}
+				float pos_input[3];
+				pos_input[0] = (UAVs_info[host_ind].pos_des[0] + (UAVs_info[host_ind].vel_cur[0] + force[0]*dt)*dt) - UAVs_info[host_ind].pos_ini[0];
+				pos_input[1] = (UAVs_info[host_ind].pos_des[1] + (UAVs_info[host_ind].vel_cur[1] + force[1]*dt)*dt) - UAVs_info[host_ind].pos_ini[1];
+				pos_input[2] = UAVs_info[host_ind].pos_des[2] - UAVs_info[host_ind].pos_ini[2];
+				move_uavs(host_ind, pos_input);
+			}
+			else if (Plan_Dim == 3){
+				float force[3];
+				force[0] = -c1*(UAVs_info[host_ind].vel_cur[0])-c2*(UAVs_info[host_ind].pos_cur[0]-UAVs_info[host_ind].pos_des[0]);
+				force[1] = -c1*(UAVs_info[host_ind].vel_cur[1])-c2*(UAVs_info[host_ind].pos_cur[1]-UAVs_info[host_ind].pos_des[1]);
+				force[2] = -c1*(UAVs_info[host_ind].vel_cur[2])-c2*(UAVs_info[host_ind].pos_cur[2]-UAVs_info[host_ind].pos_des[2]);
+				for (const auto &other_ind : avail_uavind){
+					float dist_v[3] = {	UAVs_info[host_ind].pos_cur[0]-UAVs_info[other_ind].pos_cur[0],
+										UAVs_info[host_ind].pos_cur[1]-UAVs_info[other_ind].pos_cur[1],
+										UAVs_info[host_ind].pos_cur[2]-UAVs_info[other_ind].pos_cur[2]};
+					float dist = std::pow(std::pow(dist_v[0],2) + std::pow(dist_v[1], 2) + std::pow(dist_v[2], 2), 0.5);
+					if (host_ind != other_ind && dist < r_alpha){
+						float ForceComponent = -RepulsiveGradient*std::pow(dist - r_alpha, 2);
+						force[0] += ForceComponent*(dist_v[0]/dist);
+						force[1] += ForceComponent*(dist_v[1]/dist);
+						force[2] += ForceComponent*(dist_v[2]/dist);
+					}
+				}
+				float pos_input[3];
+				pos_input[0] = (UAVs_info[host_ind].pos_des[0] + (UAVs_info[host_ind].vel_cur[0] + force[0]*dt)*dt) - UAVs_info[host_ind].pos_ini[0];
+				pos_input[1] = (UAVs_info[host_ind].pos_des[1] + (UAVs_info[host_ind].vel_cur[1] + force[1]*dt)*dt) - UAVs_info[host_ind].pos_ini[1];
+				pos_input[2] = (UAVs_info[host_ind].pos_des[2] + (UAVs_info[host_ind].vel_cur[2] + force[2]*dt)*dt) - UAVs_info[host_ind].pos_ini[2];
+				move_uavs(host_ind, pos_input);
+			}
+		}
+	}	
+	// for cf_id in self.cf_ids:
+	// 	other_cfs = self.cf_ids[:]
+	// 	other_cfs.remove(cf_id)
+	// 	self._dist_to_goal[str(cf_id)] = np.linalg.norm(self._pos[str(cf_id)] - self.finals[str(cf_id)])
+	// 	force = -self.c1*self._vel[str(cf_id)] - self.c2*(self._pos[str(cf_id)] - self.finals[str(cf_id)])
+	// 	for other_cf in other_cfs:
+	// 		dist_v = self._pos[str(other_cf)] - self._pos[str(cf_id)]
+	// 		dist = np.linalg.norm(dist_v)
+	// 		d = 2*self.radius + self.d_star
+	// 		CommunicationRadious = np.cbrt(3*np.square(self.MaxVelo)/(2*self.RepulsiveGradient)) + d
+	// 		if dist < CommunicationRadious:
+	// 			ForceComponent = -self.RepulsiveGradient * np.square(dist - CommunicationRadious)
+	// 			force += ForceComponent * (dist_v)/dist
+	// 		velocity_d = self._vel[str(cf_id)] + force * self.dt
+	// 		position_d = self._pos[str(cf_id)] + velocity_d*self.dt
+	// 		position_d[2] = 1.0
+	// 		self.update_pos(str(cf_id), position_d)
+}
 
 void QNode::Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind){
 	UAVs_info[ind] = UAV_input;
 }
 void QNode::Update_Avail_UAVind(std::list<int> avail_uavind_input){
 	avail_uavind = avail_uavind_input;
+}
+void QNode::Update_Move(int i){
+	Move[i] = true;
+}
+void QNode::Update_Planning_Dim(int i){
+	Plan_Dim = i; // 0 for no planning, 2 for 2D, 3 for 3D
 }
 
 State QNode::GetState_uavs(int ind){

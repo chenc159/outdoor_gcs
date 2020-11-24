@@ -28,6 +28,7 @@
 #endif
 
 #include <string>
+#include <cmath>
 // #include <unistd.h>
 // #include <Eigen/Eigen>
 #include <QThread>
@@ -97,7 +98,7 @@ namespace outdoor_gcs {
 	struct uav_info
 	{
 		int id = 0;
-		float pos_cur[3] = {0};
+		float pos_cur[3] = {99};
 		float vel_cur[3] = {0};
 		float pos_ini[3] = {0};
 		float pos_des[3] = {0};
@@ -145,7 +146,6 @@ public:
 	void Set_GPS_Home();
 	void move_uav(float target[3], float target_yaw);
 	void move_uav_height(float height);
-	void Do_Plan();
 
 	State GetState();
 	Imu GetImu();
@@ -163,10 +163,13 @@ public:
 	void Set_Arm_uavs(bool arm_disarm, int ind);
 	void Set_Mode_uavs(std::string command_mode, int ind);
 	void Set_GPS_Home_uavs(int host_ind, int origin_ind);
-	void move_uavs(int ind);
+	void move_uavs(int ind, float pos_input[3]);
+	void UAVS_Do_Plan();
 
 	void Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind);
 	void Update_Avail_UAVind(std::list<int> avail_uavind_input);
+	void Update_Move(int i);
+	void Update_Planning_Dim(int i);
 
 	State GetState_uavs(int ind);
 	Imu GetImu_uavs(int ind);
@@ -185,8 +188,6 @@ Q_SIGNALS:
 private:
 	int init_argc;
 	char** init_argv;
-
-	ros::Time last_request;
 
 	////////////////////// Single uav ////////////////////////////
 	mavros_msgs::State uav_state;
@@ -236,6 +237,13 @@ private:
 	std::list<int> avail_uavind;
 	int service_flag[5];
 	int publish_flag[5];
+	bool Move[5];
+	int Plan_Dim; // 0 for move wo planning, 2 for 2D, 3 for 3D
+	float c1 = 7.0;
+	float c2 = 9.0;
+	float RepulsiveGradient = 7.5*std::pow(10,6);
+	float r_alpha = 3.0;
+	float dt = 1.0;
 
 	// std::vector<ros::Subscriber> uavs_state_sub;
 	// std::vector<ros::Subscriber> uavs_imu_sub;
