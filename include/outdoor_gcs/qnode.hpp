@@ -144,7 +144,8 @@ public:
 	void Set_Mode(std::string command_mode);
 	void Set_Home();
 	void Set_GPS_Home();
-	void move_uav(float target[3], float target_yaw);
+	// void move_uav(float target[3], float target_yaw);
+	void move_uav(bool mask[3], float target[3]);
 	void move_uav_height(float height);
 
 	State GetState();
@@ -243,7 +244,7 @@ private:
 	float c2 = 9.0;
 	float RepulsiveGradient = 7.5*std::pow(10,6);
 	float r_alpha = 3.0;
-	float dt = 1.0;
+	float dt = 0.25;
 
 	// std::vector<ros::Subscriber> uavs_state_sub;
 	// std::vector<ros::Subscriber> uavs_imu_sub;

@@ -120,7 +120,7 @@ void MainWindow::on_Enable_Planning_clicked(bool check){
     }
 }
 
-void MainWindow::on_Button_Set_clicked(bool check){
+void MainWindow::on_Button_Set_Pos_clicked(bool check){
     /* read values from line edit */
     float target_state[3];
 
@@ -133,11 +133,9 @@ void MainWindow::on_Button_Set_clicked(bool check){
     if(target_state[0] < -10.0 || target_state[0] > 10.0) {
         input_is_valid = false;
     }
-
     if(target_state[1] < -10.0 || target_state[1] > 10.0) {
         input_is_valid = false;
     }
-
     if(target_state[2] < 0|| target_state[2] > 30.0) {
         input_is_valid = false;
     }
@@ -149,10 +147,82 @@ void MainWindow::on_Button_Set_clicked(bool check){
         ui.des_x->setText(QString::number(target_state[0], 'f', 2));
         ui.des_y->setText(QString::number(target_state[1], 'f', 2));
         ui.des_z->setText(QString::number(target_state[2], 'f', 2));
-
-        qnode.move_uav(target_state, 0.0);
+        bool mask[3] = { true, false, false};
+        qnode.move_uav(mask, target_state);
     	qnode.Set_Mode("OFFBOARD");
 
+    } else {
+        QMessageBox msgBox;
+        msgBox.setText("Input position is out of range!!");
+        msgBox.exec();
+    };
+}
+
+void MainWindow::on_Button_Set_Vel_clicked(bool check){
+    /* read values from line edit */
+    float target_state[3];
+
+    target_state[0] =  ui.vx_input->text().toFloat();
+    target_state[1] =  ui.vy_input->text().toFloat();
+    target_state[2] =  ui.vz_input->text().toFloat();
+    /*----------------determine whether the input is in safe range ------------------*/
+    bool input_is_valid = true;
+
+    if(target_state[0] < -5.0 || target_state[0] > 5.0) {
+        input_is_valid = false;
+    }
+    if(target_state[1] < -5.0 || target_state[1] > 5.0) {
+        input_is_valid = false;
+    }
+    if(target_state[2] < -5.0 || target_state[2] > 5.0) {
+        input_is_valid = false;
+    }
+
+    /*----------------send input ------------------*/
+    if(input_is_valid){
+        /*  update the ENU target label */
+        ui.des_vx->setText(QString::number(target_state[0], 'f', 2));
+        ui.des_vy->setText(QString::number(target_state[1], 'f', 2));
+        ui.des_vz->setText(QString::number(target_state[2], 'f', 2));
+        bool mask[3] = {false, true, false};
+        qnode.move_uav(mask, target_state);
+    	qnode.Set_Mode("OFFBOARD");
+    } else {
+        QMessageBox msgBox;
+        msgBox.setText("Input position is out of range!!");
+        msgBox.exec();
+    };
+}
+
+void MainWindow::on_Button_Set_Acc_clicked(bool check){
+    /* read values from line edit */
+    float target_state[3];
+
+    target_state[0] =  ui.ax_input->text().toFloat();
+    target_state[1] =  ui.ay_input->text().toFloat();
+    target_state[2] =  ui.az_input->text().toFloat();
+    /*----------------determine whether the input is in safe range ------------------*/
+    bool input_is_valid = true;
+
+    if(target_state[0] < -5.0 || target_state[0] > 5.0) {
+        input_is_valid = false;
+    }
+    if(target_state[1] < -5.0 || target_state[1] > 5.0) {
+        input_is_valid = false;
+    }
+    if(target_state[2] < -5.0 || target_state[2] > 5.0) {
+        input_is_valid = false;
+    }
+
+    /*----------------send input ------------------*/
+    if(input_is_valid){
+        /*  update the ENU target label */
+        ui.des_ax->setText(QString::number(target_state[0], 'f', 2));
+        ui.des_ay->setText(QString::number(target_state[1], 'f', 2));
+        ui.des_az->setText(QString::number(target_state[2], 'f', 2));
+        bool mask[3] = {false, false, true};
+        qnode.move_uav(mask, target_state);
+    	qnode.Set_Mode("OFFBOARD");
     } else {
         QMessageBox msgBox;
         msgBox.setText("Input position is out of range!!");
@@ -204,9 +274,9 @@ void MainWindow::updateuav(){
         // Eigen::Vector3d uav_euler = quaternion_to_euler(uav_quat); //Transform the Quaternion to euler Angles
         float quat[4] = {imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z};
         outdoor_gcs::Angles uav_euler = qnode.quaternion_to_euler(quat);
-        ui.roll->setText(QString::number(uav_euler.roll, 'f', 3));
-        ui.pitch->setText(QString::number(uav_euler.pitch, 'f', 3));
-        ui.yaw->setText(QString::number(uav_euler.yaw, 'f', 3));
+        ui.roll->setText(QString::number(uav_euler.roll*180/3.14159, 'f', 2));
+        ui.pitch->setText(QString::number(uav_euler.pitch*180/3.14159, 'f', 2));
+        ui.yaw->setText(QString::number(uav_euler.yaw*180/3.14159, 'f', 2));
 
         if (state_data.connected){
             ui.STATE_CONNECT->setText("<font color='green'>STATE CONNECTED</font>");
@@ -820,8 +890,8 @@ void MainWindow::updateInfoLogger(){
             Imu imu_data = qnode.GetImu_uavs(it);
             float quat[4] = {imu_data.orientation.w, imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z};
             outdoor_gcs::Angles uav_euler = qnode.quaternion_to_euler(quat);
-            ui.info_logger->addItem("Roll: " + QString::number(uav_euler.roll, 'f', 3) + ". Pitch: " + 
-                            QString::number(uav_euler.pitch, 'f', 3) + ". Yaw: " + QString::number(uav_euler.yaw, 'f', 3));
+            ui.info_logger->addItem("Roll: " + QString::number(uav_euler.roll*180/3.14159, 'f', 2) + ". Pitch: " + 
+                            QString::number(uav_euler.pitch*180/3.14159, 'f', 2) + ". Yaw: " + QString::number(uav_euler.yaw*180/3.14159, 'f', 2));
             int item_index = ui.info_logger->count()-1;
             if (!UAVs[it].imuReceived){
                 ui.info_logger->item(item_index)->setForeground(Qt::red);

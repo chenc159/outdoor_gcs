@@ -49,6 +49,7 @@ bool QNode::init() {
 	ros::NodeHandle n;
 	
 	uav_state_sub 	= n.subscribe<mavros_msgs::State>("/mavros/state", 10, &QNode::state_callback, this);
+	uav_imu_sub 	= n.subscribe<Imu>("/mavros/imu/data", 1, &QNode::imu_callback, this);
 	uav_gps_sub 	= n.subscribe<Gpsraw>("/mavros/gpsstatus/gps1/raw", 1, &QNode::gps_callback, this);
 	uav_gpsG_sub 	= n.subscribe<Gpsglobal>("/mavros/global_position/global", 1, &QNode::gpsG_callback, this);
 	uav_gpsL_sub 	= n.subscribe<Gpslocal>("/mavros/global_position/local", 1, &QNode::gpsL_callback, this);
@@ -73,9 +74,9 @@ bool QNode::init() {
 		uavs_gpsL_sub[i] 	= n.subscribe<Gpslocal>("/uav" + std::to_string(i+1) + "/mavros/global_position/local", 1, std::bind(&QNode::uavs_gpsL_callback, this, std::placeholders::_1, i));
 		uavs_from_sub[i] 	= n.subscribe<mavros_msgs::Mavlink>("/uav" + std::to_string(i+1) + "/mavlink/from", 1, std::bind(&QNode::uavs_from_callback, this, std::placeholders::_1, i));
 	
-		uavs_setpoint_pub[i] = n.advertise<PosTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/local", 1);
-		uavs_setpoint_alt_pub[i] = n.advertise<AltTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/attitude", 1);
-		uavs_gps_home_pub[i] = n.advertise<GpsHomePos>("/uav" + std::to_string(i+1) + "/mavros/global_position/home", 1);
+		uavs_setpoint_pub[i] 		= n.advertise<PosTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/local", 1);
+		uavs_setpoint_alt_pub[i] 	= n.advertise<AltTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/attitude", 1);
+		uavs_gps_home_pub[i] 		= n.advertise<GpsHomePos>("/uav" + std::to_string(i+1) + "/mavros/global_position/home", 1);
 
 		uavs_arming_client[i] 	= n.serviceClient<mavros_msgs::CommandBool>("/uav" + std::to_string(i+1) +"/mavros/cmd/arming");
 		uavs_setmode_client[i] 	= n.serviceClient<mavros_msgs::SetMode>("/uav" + std::to_string(i+1) +"/mavros/set_mode");
@@ -87,7 +88,7 @@ bool QNode::init() {
 }
 
 void QNode::run() {
-	ros::Rate loop_rate(1);
+	ros::Rate loop_rate(4); // change update rate here
 
 	while ( ros::ok() ) {
 
@@ -127,6 +128,8 @@ void QNode::run() {
 		uav_received.pregpsG = false;
 		uav_received.pregpsL = false;
 		uav_received.pregpsH = false;
+		// std::cout << uav_received.stateReceived << std::endl;
+
 
 		//////////////// Multi-uav /////////////////
 
@@ -168,6 +171,7 @@ void QNode::state_callback(const mavros_msgs::State::ConstPtr &msg){
 }
 void QNode::imu_callback(const sensor_msgs::Imu::ConstPtr &msg){
 	uav_imu = *msg;
+	uav_received.preimu = true;
 }
 void QNode::gps_callback(const outdoor_gcs::GPSRAW::ConstPtr &msg){
 	uav_gps = *msg;
@@ -193,6 +197,7 @@ void QNode::from_callback(const mavros_msgs::Mavlink::ConstPtr &msg){
 }
 
 void QNode::pub_command(){
+	uav_setpoint.header.stamp = ros::Time::now();
 	uav_setpoint_pub.publish(uav_setpoint);
 }
 
@@ -224,21 +229,47 @@ void QNode::Set_GPS_Home(){
 	uav_gps_home_pub.publish(uav_gps_home);
 }
 
-void QNode::move_uav(float target[3], float target_yaw){
+// void QNode::move_uav(float target[3], float target_yaw){
+// 	uav_setpoint.header.stamp = ros::Time::now();
+// 	//Bitmask toindicate which dimensions should be ignored (1 means ignore,0 means not ignore; Bit 10 must set to 0)
+//     //Bit 1:x, bit 2:y, bit 3:z, bit 4:vx, bit 5:vy, bit 6:vz, bit 7:ax, bit 8:ay, bit 9:az, bit 10:is_force_sp, bit 11:yaw, bit 12:yaw_rate
+//     //Bit 10 should set to 0, means is not force sp
+//     uav_setpoint.type_mask = 0b100111111000;  // 100 111 111 000  xyz + yaw
+//     uav_setpoint.coordinate_frame = 1;
+// 	uav_setpoint.position.x = target[0];
+// 	uav_setpoint.position.y = target[1];
+// 	uav_setpoint.position.z = target[2];
+// 	uav_setpoint.yaw = target_yaw;
+// }
+void QNode::move_uav(bool mask[3], float target[3]){
 	uav_setpoint.header.stamp = ros::Time::now();
+    uav_setpoint.coordinate_frame = 1;
 	//Bitmask toindicate which dimensions should be ignored (1 means ignore,0 means not ignore; Bit 10 must set to 0)
     //Bit 1:x, bit 2:y, bit 3:z, bit 4:vx, bit 5:vy, bit 6:vz, bit 7:ax, bit 8:ay, bit 9:az, bit 10:is_force_sp, bit 11:yaw, bit 12:yaw_rate
     //Bit 10 should set to 0, means is not force sp
-    uav_setpoint.type_mask = 0b100111111000;  // 100 111 111 000  xyz + yaw
-    uav_setpoint.coordinate_frame = 1;
-	uav_setpoint.position.x = target[0];
-	uav_setpoint.position.y = target[1];
-	uav_setpoint.position.z = target[2];
-	uav_setpoint.yaw = target_yaw;
+	if (mask[0]){
+		uav_setpoint.type_mask = 0b100111111000;
+		uav_setpoint.position.x = target[0];
+		uav_setpoint.position.y = target[1];
+		uav_setpoint.position.z = target[2];
+	}
+	else if (mask[1]){
+		uav_setpoint.type_mask = 0b100111000111;
+		uav_setpoint.velocity.x = target[0];
+		uav_setpoint.velocity.y = target[1];
+		uav_setpoint.velocity.z = target[2];
+	}
+	else if (mask[2]){
+		uav_setpoint.type_mask = 0b100000111111;
+		uav_setpoint.acceleration_or_force.x = target[0];
+		uav_setpoint.acceleration_or_force.y = target[1];
+		uav_setpoint.acceleration_or_force.z = target[2];
+	}
+	uav_setpoint.yaw = 0.0;
 }
 
 void QNode::move_uav_height(float height){
-	uav_setpoint.header.stamp = ros::Time::now();
+	// uav_setpoint.header.stamp = ros::Time::now();
 	//Bitmask toindicate which dimensions should be ignored (1 means ignore,0 means not ignore; Bit 10 must set to 0)
     //Bit 1:x, bit 2:y, bit 3:z, bit 4:vx, bit 5:vy, bit 6:vz, bit 7:ax, bit 8:ay, bit 9:az, bit 10:is_force_sp, bit 11:yaw, bit 12:yaw_rate
     //Bit 10 should set to 0, means is not force sp
