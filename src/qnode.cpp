@@ -48,7 +48,7 @@ bool QNode::init() {
 	ros::start(); // explicitly needed since our nodehandle is going out of scope.
 	ros::NodeHandle n;
 	
-	uav_state_sub 	= n.subscribe<mavros_msgs::State>("/mavros/state", 10, &QNode::state_callback, this);
+	// uav_state_sub 	= n.subscribe<mavros_msgs::State>("/mavros/state", 1, &QNode::state_callback, this);
 	uav_imu_sub 	= n.subscribe<Imu>("/mavros/imu/data", 1, &QNode::imu_callback, this);
 	uav_gps_sub 	= n.subscribe<Gpsraw>("/mavros/gpsstatus/gps1/raw", 1, &QNode::gps_callback, this);
 	uav_gpsG_sub 	= n.subscribe<Gpsglobal>("/mavros/global_position/global", 1, &QNode::gpsG_callback, this);
@@ -82,6 +82,7 @@ bool QNode::init() {
 		uavs_setmode_client[i] 	= n.serviceClient<mavros_msgs::SetMode>("/uav" + std::to_string(i+1) +"/mavros/set_mode");
 	
 	}
+	last_change = ros::Time::now();
 
 	start();
 	return true;
@@ -457,6 +458,20 @@ void QNode::UAVS_Do_Plan(){
 				pos_input[1] = (UAVs_info[host_ind].pos_des[1] + (UAVs_info[host_ind].vel_cur[1] + force[1]*dt)*dt) - UAVs_info[host_ind].pos_ini[1];
 				pos_input[2] = (UAVs_info[host_ind].pos_des[2] + (UAVs_info[host_ind].vel_cur[2] + force[2]*dt)*dt) - UAVs_info[host_ind].pos_ini[2];
 				move_uavs(host_ind, pos_input);
+			}
+			else if (Plan_Dim == 10){
+				if (ros::Time::now() - last_change >= ros::Duration(5.0)){
+					float pos_input[3];
+					pos_input[0] = square_x[square_i];
+					pos_input[1] = square_y[square_i];
+					pos_input[2] = 2.5;
+					move_uavs(host_ind, pos_input);
+					square_i += 1;
+					if (square_i == 8){
+						square_i = 0;
+					}
+					last_change = ros::Time::now();
+				}
 			}
 		}
 	}	

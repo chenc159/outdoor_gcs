@@ -93,6 +93,7 @@ public Q_SLOTS:
 	void on_InfoLogger_Clear_clicked(bool check);
 	void on_checkBox_Plan_2D_stateChanged(int);
 	void on_checkBox_Plan_3D_stateChanged(int);
+	void on_checkBox_square_stateChanged(int);
 	void on_checkBox_imu_stateChanged(int);
 	void on_checkBox_mode_stateChanged(int);
 	void on_checkBox_gps_stateChanged(int);
@@ -117,6 +118,10 @@ private:
 	////////////////////// Single-uav ////////////////////////////
 	bool uav_ARMED;
 	bool Planning_Enabled = false;
+	ros::Time last_change;
+	float square_x[8] = {2, 2, 2, 0, -2, -2, -2, 0}; 
+	float square_y[8] = {2, 0, -2, -2, -2, 0, 2, 2};
+	int square_i = 0;
 
 	////////////////////// Multi-uav ////////////////////////////
 	int DroneNumber = 5;

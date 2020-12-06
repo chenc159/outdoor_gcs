@@ -256,6 +256,23 @@ void MainWindow::on_Button_Get_clicked(bool check){
 ////////////////////////// Update signals /////////////////////////
 void MainWindow::updateuav(){
 
+    if (ui.checkBox_square1 -> isChecked()){
+        if (ros::Time::now() - last_change >= ros::Duration(5.0)){
+            float pos_input[3];
+            pos_input[0] = square_x[square_i];
+            pos_input[1] = square_y[square_i];
+            pos_input[2] = 2.5;
+            bool mask[3] = { true, false, false};
+            qnode.move_uav(mask, pos_input);
+    	    qnode.Set_Mode("OFFBOARD");
+            square_i += 1;
+            if (square_i == 8){
+                square_i = 0;
+            }
+            last_change = ros::Time::now();
+        }
+    }
+
 	mavros_msgs::State state_data = qnode.GetState();
     Imu imu_data = qnode.GetImu();
     sensor_msgs::BatteryState bat_data = qnode.GetBat();
@@ -395,7 +412,7 @@ void MainWindow::on_Button_Init_clicked(bool check){
     for (const auto &i : avail_uavind){
         UAVs[i].pos_ini[0] = UAVs[i].pos_cur[0];
         UAVs[i].pos_ini[1] = UAVs[i].pos_cur[1];
-        UAVs[i].pos_ini[2] = UAVs[i].pos_cur[2];
+        UAVs[i].pos_ini[2] = 0.0;
         qnode.Update_UAV_info(UAVs[i], i);
     }
     ui.notice_logger->addItem(QTime::currentTime().toString() + " : Initial positions of all uav updated!");
@@ -417,6 +434,10 @@ void MainWindow::on_Set_GPS_Origin_clicked(bool check){
         ui.notice_logger->item(item_index)->setForeground(Qt::darkGreen);
         for (const auto &i : avail_uavind){
             qnode.Set_GPS_Home_uavs(i, origin_ind);
+            UAVs[i].pos_ini[0] = UAVs[i].pos_cur[0];
+            UAVs[i].pos_ini[1] = UAVs[i].pos_cur[1];
+            UAVs[i].pos_ini[2] = 0.0;
+            qnode.Update_UAV_info(UAVs[i], i);
         }
     } else{
         ui.notice_logger->addItem(QTime::currentTime().toString() + " : Please select an uav to set GPS origin!");
@@ -793,6 +814,17 @@ void MainWindow::on_checkBox_Plan_3D_stateChanged(int){
         ui.notice_logger->item(item_index)->setForeground(Qt::blue);
     }else{
         qnode.Update_Planning_Dim(0);
+    }
+}
+void MainWindow::on_checkBox_square_stateChanged(int){
+    if (ui.checkBox_square -> isChecked()){
+        qnode.Update_Planning_Dim(10);
+        // ui.checkBox_Plan_2D -> setChecked(false);
+        // ui.notice_logger->addItem(QTime::currentTime().toString() + " : 3D Planning Set!");
+        // int item_index = ui.notice_logger->count()-1;
+        // ui.notice_logger->item(item_index)->setForeground(Qt::blue);
+    // }else{
+    //     qnode.Update_Planning_Dim(0);
     }
 }
 void MainWindow::on_checkBox_imu_stateChanged(int){

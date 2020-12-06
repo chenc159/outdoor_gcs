@@ -233,6 +233,11 @@ private:
 	void from_callback(const mavros_msgs::Mavlink::ConstPtr &msg);
 
 	////////////////////// Multi-uav ////////////////////////////
+	ros::Time last_change;
+	float square_x[8] = {2, 2, 2, 0, -2, -2, -2, 0}; 
+	float square_y[8] = {2, 0, -2, -2, -2, 0, 2, 2};
+	int square_i = 0;
+
 	int DroneNumber = 5;
 	outdoor_gcs::uav_info UAVs_info[5];
 	std::list<int> avail_uavind;

@@ -804,6 +804,19 @@
           <string>Set Acc</string>
          </property>
         </widget>
+        <widget class="QCheckBox" name="checkBox_square1">
+         <property name="geometry">
+          <rect>
+           <x>180</x>
+           <y>30</y>
+           <width>81</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Square</string>
+         </property>
+        </widget>
        </widget>
        <widget class="QGroupBox" name="COMMAND">
         <property name="geometry">
@@ -1840,7 +1853,7 @@
           <x>250</x>
           <y>450</y>
           <width>251</width>
-          <height>81</height>
+          <height>111</height>
          </rect>
         </property>
         <property name="title">
@@ -1907,6 +1920,19 @@
            <string>3D</string>
           </property>
          </widget>
+        </widget>
+        <widget class="QCheckBox" name="checkBox_square">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>90</y>
+           <width>81</width>
+           <height>16</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Square</string>
+         </property>
         </widget>
        </widget>
       </widget>
