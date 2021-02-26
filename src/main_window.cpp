@@ -257,14 +257,14 @@ void MainWindow::on_Button_Get_clicked(bool check){
 void MainWindow::updateuav(){
 
     if (ui.checkBox_square1 -> isChecked()){
+        float pos_input[3];
+        pos_input[0] = square_x[square_i];
+        pos_input[1] = square_y[square_i];
+        pos_input[2] = 2.5;
+        bool mask[3] = { true, false, false};
+        qnode.move_uav(mask, pos_input);
+        qnode.Set_Mode("OFFBOARD");
         if (ros::Time::now() - last_change >= ros::Duration(5.0)){
-            float pos_input[3];
-            pos_input[0] = square_x[square_i];
-            pos_input[1] = square_y[square_i];
-            pos_input[2] = 2.5;
-            bool mask[3] = { true, false, false};
-            qnode.move_uav(mask, pos_input);
-    	    qnode.Set_Mode("OFFBOARD");
             square_i += 1;
             if (square_i == 8){
                 square_i = 0;
@@ -823,8 +823,8 @@ void MainWindow::on_checkBox_square_stateChanged(int){
         // ui.notice_logger->addItem(QTime::currentTime().toString() + " : 3D Planning Set!");
         // int item_index = ui.notice_logger->count()-1;
         // ui.notice_logger->item(item_index)->setForeground(Qt::blue);
-    // }else{
-    //     qnode.Update_Planning_Dim(0);
+    }else{
+        qnode.Update_Planning_Dim(0);
     }
 }
 void MainWindow::on_checkBox_imu_stateChanged(int){

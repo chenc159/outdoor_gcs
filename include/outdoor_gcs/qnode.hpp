@@ -36,7 +36,7 @@
 
 
 #include <outdoor_gcs/GPSRAW.h>
-#include <outdoor_gcs/HomePosition.h>
+#include <outdoor_gcs/HomePosition.h> //mavros_msgs/HomePosition.h
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/CommandHome.h>

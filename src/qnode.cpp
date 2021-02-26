@@ -89,7 +89,7 @@ bool QNode::init() {
 }
 
 void QNode::run() {
-	ros::Rate loop_rate(4); // change update rate here
+	ros::Rate loop_rate(10); // change update rate here
 
 	while ( ros::ok() ) {
 
@@ -460,16 +460,22 @@ void QNode::UAVS_Do_Plan(){
 				move_uavs(host_ind, pos_input);
 			}
 			else if (Plan_Dim == 10){
+				float pos_input[3];
+				// pos_input[0], UAVs_info[host_ind].pos_des[0] = square_x[square_i], square_x[square_i];
+				// pos_input[1], UAVs_info[host_ind].pos_des[1] = square_y[square_i], square_y[square_i];
+				// pos_input[2], UAVs_info[host_ind].pos_des[2] = 2.5, 2.5;
+				pos_input[0] = square_x[square_i];
+				pos_input[1] = square_y[square_i];
+				pos_input[2] = 2.5;
+				move_uavs(host_ind, pos_input);
 				if (ros::Time::now() - last_change >= ros::Duration(5.0)){
-					float pos_input[3];
-					pos_input[0] = square_x[square_i];
-					pos_input[1] = square_y[square_i];
-					pos_input[2] = 2.5;
-					move_uavs(host_ind, pos_input);
 					square_i += 1;
 					if (square_i == 8){
 						square_i = 0;
 					}
+					UAVs_info[host_ind].pos_des[0] = square_x[square_i];
+					UAVs_info[host_ind].pos_des[1] = square_y[square_i];
+					UAVs_info[host_ind].pos_des[2] = 2.5;
 					last_change = ros::Time::now();
 				}
 			}
