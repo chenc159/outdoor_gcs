@@ -37,6 +37,7 @@
 
 #include <outdoor_gcs/GPSRAW.h>
 #include <outdoor_gcs/HomePosition.h> //mavros_msgs/HomePosition.h
+#include <outdoor_gcs/ControlCommand.h>
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/CommandHome.h>
@@ -123,8 +124,21 @@ namespace outdoor_gcs {
 		bool print_des = true;
 		bool clear_each_print = true;
 	};
-	
-	
+
+	enum Command_Type
+	{
+		Idle,
+		Takeoff,
+		Move_ENU,
+		Move_Body,
+		Hold,
+		Land,
+		Disarm,
+		Payload_Stabilization_SingleUAV,
+		Trajectory_Tracking,
+		Payload_Stabilization,
+		Payload_Land,
+	};
 
 
 class QNode : public QThread {
@@ -243,7 +257,7 @@ private:
 	std::list<int> avail_uavind;
 	int service_flag[5];
 	int publish_flag[5];
-	bool Move[5];
+	bool Move[5]; // default false
 	int Plan_Dim; // 0 for move wo planning, 2 for 2D, 3 for 3D
 	float c1 = 7.0;
 	float c2 = 9.0;
@@ -251,18 +265,9 @@ private:
 	float r_alpha = 3.0;
 	float dt = 0.25;
 
-	// std::vector<ros::Subscriber> uavs_state_sub;
-	// std::vector<ros::Subscriber> uavs_imu_sub;
-	// std::vector<ros::Subscriber> uavs_gps_sub;
-	// std::vector<ros::Subscriber> uavs_gpsL_sub;
-	// std::vector<ros::Subscriber> uavs_from_sub;
-
-	// std::vector<ros::Publisher> uavs_setpoint_pub;
-	// std::vector<ros::Publisher> uavs_setpoint_alt_pub;	
-	// std::vector<ros::Publisher> uavs_gps_home_pub;
-
-	// std::vector<ros::ServiceClient> uavs_arming_client;
-	// std::vector<ros::ServiceClient> uavs_setmode_client;
+	outdoor_gcs::ControlCommand Command_List[3];
+	bool commandFlag[3];
+    int comid = 1;
 
 	ros::Subscriber uavs_state_sub[5];
 	ros::Subscriber uavs_imu_sub[5];
@@ -274,6 +279,7 @@ private:
 	ros::Publisher uavs_setpoint_pub[5];
 	ros::Publisher uavs_setpoint_alt_pub[5];	
 	ros::Publisher uavs_gps_home_pub[5];
+	ros::Publisher uavs_move_pub[5];
 
 	ros::ServiceClient uavs_arming_client[5];
 	ros::ServiceClient uavs_setmode_client[5];

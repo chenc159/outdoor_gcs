@@ -64,7 +64,7 @@ bool QNode::init() {
 	uav_setmode_client 	= n.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
 	uav_sethome_client 	= n.serviceClient<mavros_msgs::CommandHome>("/mavros/cmd/set_home");
 
-	for (int i = 0; i < DroneNumber ; i++) {
+	for (int i = 0; i < DroneNumber; i++) {
 		// std::cout << "/uav" + std::to_string(i+1) + "/mavros/imu/data" << std::endl;
 		// std::string name = "/uav" + std::to_string(i+1) + "/mavros/imu/data";
 		uavs_state_sub[i]	= n.subscribe<mavros_msgs::State>("/uav" + std::to_string(i+1) + "/mavros/state", 1, std::bind(&QNode::uavs_state_callback, this, std::placeholders::_1, i));
@@ -77,10 +77,13 @@ bool QNode::init() {
 		uavs_setpoint_pub[i] 		= n.advertise<PosTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/local", 1);
 		uavs_setpoint_alt_pub[i] 	= n.advertise<AltTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/attitude", 1);
 		uavs_gps_home_pub[i] 		= n.advertise<GpsHomePos>("/uav" + std::to_string(i+1) + "/mavros/global_position/home", 1);
+        uavs_move_pub[i] 			= n.advertise<outdoor_gcs::ControlCommand>("/uav" + std::to_string(i+1) + "/px4_command/control_command", 1);
 
 		uavs_arming_client[i] 	= n.serviceClient<mavros_msgs::CommandBool>("/uav" + std::to_string(i+1) +"/mavros/cmd/arming");
 		uavs_setmode_client[i] 	= n.serviceClient<mavros_msgs::SetMode>("/uav" + std::to_string(i+1) +"/mavros/set_mode");
 	
+
+
 	}
 	last_change = ros::Time::now();
 
@@ -334,7 +337,8 @@ void QNode::uavs_pub_command(){
 			publish_flag[ind] = 0;
 		}
 		else if (publish_flag[ind] == 2){ // setpoint/local
-			uavs_setpoint_pub[ind].publish(uavs_setpoint[ind]);
+			// uavs_setpoint_pub[ind].publish(uavs_setpoint[ind]);
+        	uavs_move_pub[ind].publish(Command_List[ind]);
 			publish_flag[ind] = 0;
 		}
 	}
@@ -385,25 +389,42 @@ void QNode::Set_GPS_Home_uavs(int host_ind, int origin_ind){
 	publish_flag[host_ind] = 1;
 }
 
-void QNode::move_uavs(int ind, float pos_input[3]){
-	uavs_setpoint[ind].header.stamp = ros::Time::now();
-    uavs_setpoint[ind].type_mask = 0b100111111000;  // 100 111 111 000  xyz + yaw
-    uavs_setpoint[ind].coordinate_frame = 1;
-	uavs_setpoint[ind].position.x = pos_input[0];
-	uavs_setpoint[ind].position.y = pos_input[1];
-	uavs_setpoint[ind].position.z = pos_input[2];
-	uavs_setpoint[ind].yaw = 0.0;
-	publish_flag[ind] = 2;
-	// Set_Mode_uavs("OFFBOARD", ind);
+// void QNode::move_uavs(int ind, float pos_input[3]){
+// 	uavs_setpoint[ind].header.stamp = ros::Time::now();
+//     uavs_setpoint[ind].type_mask = 0b100111111000;  // 100 111 111 000  xyz + yaw
+//     uavs_setpoint[ind].coordinate_frame = 1;
+// 	uavs_setpoint[ind].position.x = pos_input[0];
+// 	uavs_setpoint[ind].position.y = pos_input[1];
+// 	uavs_setpoint[ind].position.z = pos_input[2];
+// 	uavs_setpoint[ind].yaw = 0.0;
+// 	publish_flag[ind] = 2;
+// 	// Set_Mode_uavs("OFFBOARD", ind);
+// }
+
+void QNode::move_uavs(int ID, float pos_input[3]) {
+    // commandFlag[ID] = true;
+	publish_flag[ID] = 2;
+    Command_List[ID].header.stamp = ros::Time::now();
+    Command_List[ID].Mode = Move_ENU;
+    // generate_com(0, state_desired,Command_List[ID]);
+
+	Command_List[ID].Reference_State.Sub_mode  = 0;
+	Command_List[ID].Reference_State.position_ref[0] = pos_input[0];
+	Command_List[ID].Reference_State.position_ref[1] = pos_input[1];
+	Command_List[ID].Reference_State.position_ref[2] = pos_input[2];
+	Command_List[ID].Reference_State.velocity_ref[0] = 0;
+	Command_List[ID].Reference_State.velocity_ref[1] = 0;
+	Command_List[ID].Reference_State.velocity_ref[2] = 0;
+    Command_List[ID].Reference_State.acceleration_ref[0] = 0;
+    Command_List[ID].Reference_State.acceleration_ref[1] = 0;
+    Command_List[ID].Reference_State.acceleration_ref[2] = 0;
+
+    Command_List[ID].Reference_State.yaw_ref = 0;
+    Command_List[ID].Command_ID = comid;
+    comid++;
+
 }
 
-// void QNode::Move_uavs_alt(int ind){
-// 	uavs_setpoint_alt[ind].orientation.x = 
-// 	uavs_setpoint_alt[ind].orientation.y = 
-// 	uavs_setpoint_alt[ind].orientation.z = 
-// 	uavs_setpoint_alt[ind].orientation.w =
-// 	uavs_setpoint_alt[ind].thrust = 
-// }
 
 void QNode::UAVS_Do_Plan(){
 	for (const auto &host_ind : avail_uavind){

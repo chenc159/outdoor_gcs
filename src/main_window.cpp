@@ -949,7 +949,7 @@ void MainWindow::updateInfoLogger(){
             }
             ui.info_logger->addItem(state_to_be_print);
             int item_index = ui.info_logger->count()-1;
-            if (!state_data.connected){
+            if (!UAVs[it].stateReceived){//state_data.connected
                 ui.info_logger->item(item_index)->setForeground(Qt::red);
             }
         }
