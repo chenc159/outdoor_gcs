@@ -73,7 +73,8 @@ bool QNode::init() {
 		uavs_gpsG_sub[i] 	= n.subscribe<Gpsglobal>("/uav" + std::to_string(i+1) + "/mavros/global_position/global", 1, std::bind(&QNode::uavs_gpsG_callback, this, std::placeholders::_1, i));
 		uavs_gpsL_sub[i] 	= n.subscribe<Gpslocal>("/uav" + std::to_string(i+1) + "/mavros/global_position/local", 1, std::bind(&QNode::uavs_gpsL_callback, this, std::placeholders::_1, i));
 		uavs_from_sub[i] 	= n.subscribe<mavros_msgs::Mavlink>("/uav" + std::to_string(i+1) + "/mavlink/from", 1, std::bind(&QNode::uavs_from_callback, this, std::placeholders::_1, i));
-	
+		uavs_log_sub[i]		= n.subscribe<outdoor_gcs::Topic_for_log>("/uav" + std::to_string(i+1) + "/px4_command/topic_for_log", 1, std::bind(&QNode::uavs_log_callback, this, std::placeholders::_1, i));
+
 		uavs_setpoint_pub[i] 		= n.advertise<PosTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/local", 1);
 		uavs_setpoint_alt_pub[i] 	= n.advertise<AltTarg>("/uav" + std::to_string(i+1) + "/mavros/setpoint_raw/attitude", 1);
 		uavs_gps_home_pub[i] 		= n.advertise<GpsHomePos>("/uav" + std::to_string(i+1) + "/mavros/global_position/home", 1);
@@ -318,28 +319,24 @@ void QNode::uavs_call_service(){
 		if (service_flag[ind] == 1){ // arm or disarm
 			uavs_arming_client[ind].call(uavs_arm[ind]);
 			service_flag[ind] = 0;
-			// if(uavs_arming_client[ind].call(uavs_arm[ind]) && uavs_arm[ind].response.success){
-				// break;
-			// }
 		}
 		else if (service_flag[ind] == 2){ // set mode (AUTO.TAKEOFF, AUTO.LAUBD, OFFBOARD ... etc)
 			uavs_setmode_client[ind].call(uavs_setmode[ind]);
 			service_flag[ind] = 0;
-			// break;
 		}
 	}
 }
 
 void QNode::uavs_pub_command(){
 	for (const auto &ind : avail_uavind){
-		if (publish_flag[ind] == 1){ // gps set origin
+		if (pub_home_flag[ind]){ // gps set origin
 			uavs_gps_home_pub[ind].publish(uavs_gps_home[ind]);
-			publish_flag[ind] = 0;
+			pub_move_flag[ind] = false;
 		}
-		else if (publish_flag[ind] == 2){ // setpoint/local
+		if (pub_home_flag[ind]){ // setpoint/local
 			// uavs_setpoint_pub[ind].publish(uavs_setpoint[ind]);
         	uavs_move_pub[ind].publish(Command_List[ind]);
-			publish_flag[ind] = 0;
+			pub_move_flag[ind] = false;
 		}
 	}
 }
@@ -374,6 +371,10 @@ void QNode::uavs_from_callback(const mavros_msgs::Mavlink::ConstPtr &msg, int in
 	UAVs_info[ind].id = uavs_from[ind].sysid;
 }
 
+void QNode::uavs_log_callback(const outdoor_gcs::Topic_for_log::ConstPtr &msg, int ind){
+	uavs_log[ind] = *msg;
+}
+
 void QNode::Set_Arm_uavs(bool arm_disarm, int ind){
 	uavs_arm[ind].request.value = arm_disarm;
 	service_flag[ind] = 1;
@@ -386,7 +387,7 @@ void QNode::Set_Mode_uavs(std::string command_mode, int ind){
 void QNode::Set_GPS_Home_uavs(int host_ind, int origin_ind){
 	uavs_gps_home[host_ind].geo.latitude  = uavs_gpsG[origin_ind].latitude;
 	uavs_gps_home[host_ind].geo.longitude = uavs_gpsG[origin_ind].longitude;
-	publish_flag[host_ind] = 1;
+	pub_home_flag[host_ind] = true;
 }
 
 // void QNode::move_uavs(int ind, float pos_input[3]){
@@ -403,7 +404,7 @@ void QNode::Set_GPS_Home_uavs(int host_ind, int origin_ind){
 
 void QNode::move_uavs(int ID, float pos_input[3]) {
     // commandFlag[ID] = true;
-	publish_flag[ID] = 2;
+	pub_move_flag[ID] = true;
     Command_List[ID].header.stamp = ros::Time::now();
     Command_List[ID].Mode = Move_ENU;
     // generate_com(0, state_desired,Command_List[ID]);
@@ -422,7 +423,7 @@ void QNode::move_uavs(int ID, float pos_input[3]) {
     Command_List[ID].Reference_State.yaw_ref = 0;
     Command_List[ID].Command_ID = comid;
     comid++;
-
+	// ROS_INFO("Sent");
 }
 
 
@@ -432,9 +433,9 @@ void QNode::UAVS_Do_Plan(){
 		else{
 			if (Plan_Dim == 0){
 				float pos_input[3];
-				pos_input[0] = UAVs_info[host_ind].pos_des[0] - UAVs_info[host_ind].pos_ini[0];
-				pos_input[1] = UAVs_info[host_ind].pos_des[1] - UAVs_info[host_ind].pos_ini[1];
-				pos_input[2] = UAVs_info[host_ind].pos_des[2] - UAVs_info[host_ind].pos_ini[2];
+				pos_input[0] = UAVs_info[host_ind].pos_des[0];
+				pos_input[1] = UAVs_info[host_ind].pos_des[1];
+				pos_input[2] = UAVs_info[host_ind].pos_des[2];
 				move_uavs(host_ind, pos_input);
 			}
 			else if (Plan_Dim == 2){
@@ -452,9 +453,9 @@ void QNode::UAVS_Do_Plan(){
 					}
 				}
 				float pos_input[3];
-				pos_input[0] = (UAVs_info[host_ind].pos_des[0] + (UAVs_info[host_ind].vel_cur[0] + force[0]*dt)*dt) - UAVs_info[host_ind].pos_ini[0];
-				pos_input[1] = (UAVs_info[host_ind].pos_des[1] + (UAVs_info[host_ind].vel_cur[1] + force[1]*dt)*dt) - UAVs_info[host_ind].pos_ini[1];
-				pos_input[2] = UAVs_info[host_ind].pos_des[2] - UAVs_info[host_ind].pos_ini[2];
+				pos_input[0] = (UAVs_info[host_ind].pos_des[0] + (UAVs_info[host_ind].vel_cur[0] + force[0]*dt)*dt);
+				pos_input[1] = (UAVs_info[host_ind].pos_des[1] + (UAVs_info[host_ind].vel_cur[1] + force[1]*dt)*dt);
+				pos_input[2] = UAVs_info[host_ind].pos_des[2];
 				move_uavs(host_ind, pos_input);
 			}
 			else if (Plan_Dim == 3){
@@ -475,9 +476,9 @@ void QNode::UAVS_Do_Plan(){
 					}
 				}
 				float pos_input[3];
-				pos_input[0] = (UAVs_info[host_ind].pos_des[0] + (UAVs_info[host_ind].vel_cur[0] + force[0]*dt)*dt) - UAVs_info[host_ind].pos_ini[0];
-				pos_input[1] = (UAVs_info[host_ind].pos_des[1] + (UAVs_info[host_ind].vel_cur[1] + force[1]*dt)*dt) - UAVs_info[host_ind].pos_ini[1];
-				pos_input[2] = (UAVs_info[host_ind].pos_des[2] + (UAVs_info[host_ind].vel_cur[2] + force[2]*dt)*dt) - UAVs_info[host_ind].pos_ini[2];
+				pos_input[0] = (UAVs_info[host_ind].pos_des[0] + (UAVs_info[host_ind].vel_cur[0] + force[0]*dt)*dt);
+				pos_input[1] = (UAVs_info[host_ind].pos_des[1] + (UAVs_info[host_ind].vel_cur[1] + force[1]*dt)*dt);
+				pos_input[2] = (UAVs_info[host_ind].pos_des[2] + (UAVs_info[host_ind].vel_cur[2] + force[2]*dt)*dt);
 				move_uavs(host_ind, pos_input);
 			}
 			else if (Plan_Dim == 10){
@@ -527,8 +528,9 @@ void QNode::Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind){
 void QNode::Update_Avail_UAVind(std::list<int> avail_uavind_input){
 	avail_uavind = avail_uavind_input;
 }
-void QNode::Update_Move(int i){
-	Move[i] = true;
+void QNode::Update_Move(int i, bool move){
+	Move[i] = move;
+	UAVs_info[i].move = move;
 }
 void QNode::Update_Planning_Dim(int i){
 	Plan_Dim = i; // 0 for no planning, 2 for 2D, 3 for 3D
@@ -553,6 +555,10 @@ mavros_msgs::Mavlink QNode::GetFrom_uavs(int ind){
 outdoor_gcs::uav_info QNode::Get_UAV_info(int ind){
 	return UAVs_info[ind];
 }
+outdoor_gcs::Topic_for_log  QNode::GetLog_uavs(int ind){
+	return uavs_log[ind];
+}
+
 
 QStringList QNode::lsAllTopics(){
 	ros::master::getTopics(topic_infos);

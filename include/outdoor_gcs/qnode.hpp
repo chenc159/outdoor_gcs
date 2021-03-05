@@ -38,6 +38,7 @@
 #include <outdoor_gcs/GPSRAW.h>
 #include <outdoor_gcs/HomePosition.h> //mavros_msgs/HomePosition.h
 #include <outdoor_gcs/ControlCommand.h>
+#include <outdoor_gcs/Topic_for_log.h>
 #include <mavros_msgs/State.h>
 #include <mavros_msgs/CommandBool.h>
 #include <mavros_msgs/CommandHome.h>
@@ -113,6 +114,7 @@ namespace outdoor_gcs {
 		bool preimuReceived = false;
 		bool pregpsReceived = false;
 		bool pregpsLReceived = false;
+		bool move = false;
 	};
 
 	struct checkbox_status
@@ -183,7 +185,7 @@ public:
 
 	void Update_UAV_info(outdoor_gcs::uav_info UAV_input, int ind);
 	void Update_Avail_UAVind(std::list<int> avail_uavind_input);
-	void Update_Move(int i);
+	void Update_Move(int i, bool move);
 	void Update_Planning_Dim(int i);
 
 	State GetState_uavs(int ind);
@@ -192,6 +194,7 @@ public:
 	Gpslocal GetGPSL_uavs(int ind);
 	mavros_msgs::Mavlink GetFrom_uavs(int ind);
 	outdoor_gcs::uav_info Get_UAV_info(int ind);
+	outdoor_gcs::Topic_for_log GetLog_uavs(int ind);
 
 	QStringList lsAllTopics();
 	outdoor_gcs::Angles quaternion_to_euler(float quat[4]);
@@ -256,7 +259,8 @@ private:
 	outdoor_gcs::uav_info UAVs_info[5];
 	std::list<int> avail_uavind;
 	int service_flag[5];
-	int publish_flag[5];
+	bool pub_move_flag[5];
+	bool pub_home_flag[5];
 	bool Move[5]; // default false
 	int Plan_Dim; // 0 for move wo planning, 2 for 2D, 3 for 3D
 	float c1 = 7.0;
@@ -275,6 +279,7 @@ private:
 	ros::Subscriber uavs_gpsG_sub[5];
 	ros::Subscriber uavs_gpsL_sub[5];
 	ros::Subscriber uavs_from_sub[5];
+	ros::Subscriber uavs_log_sub[5];
 
 	ros::Publisher uavs_setpoint_pub[5];
 	ros::Publisher uavs_setpoint_alt_pub[5];	
@@ -290,6 +295,7 @@ private:
 	Gpsglobal uavs_gpsG[5];
 	Gpslocal uavs_gpsL[5];
 	mavros_msgs::Mavlink uavs_from[5];
+	outdoor_gcs::Topic_for_log uavs_log[5];
 	mavros_msgs::CommandBool uavs_arm[5];
 	mavros_msgs::SetMode uavs_setmode[5];
 	PosTarg uavs_setpoint[5];
@@ -302,6 +308,7 @@ private:
 	void uavs_gpsG_callback(const Gpsglobal::ConstPtr &msg, int ind);
 	void uavs_gpsL_callback(const Gpslocal::ConstPtr &msg, int ind);
 	void uavs_from_callback(const mavros_msgs::Mavlink::ConstPtr &msg, int ind);
+	void uavs_log_callback(const outdoor_gcs::Topic_for_log::ConstPtr &msg, int ind);
 
 };
 
